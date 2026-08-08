@@ -1,5 +1,7 @@
 import { useLoader } from '@react-three/fiber';
-import { TextureLoader, CubeTextureLoader, GLTFLoader } from 'three';
+import { TextureLoader, CubeTextureLoader } from 'three';
+// @ts-ignore
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader';
 
 export const AssetLoader = {
   // TODO: Replace with actual asset paths when available
