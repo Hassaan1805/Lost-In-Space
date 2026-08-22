@@ -1,0 +1,350 @@
+/* ================================================================
+   Radial Orbital Timeline Styles
+   ================================================================ */
+
+.rot-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  pointer-events: auto;
+  z-index: 15; /* Above canvas, below HUD */
+}
+
+/* A local shadow field lets the navigation read over the bright Earth without
+   introducing a card or a second visual panel. */
+.rot-container::before {
+  content: '';
+  position: absolute;
+  width: min(42rem, 92vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(1, 11, 17, 0.62) 0%,
+    rgba(1, 11, 17, 0.36) 44%,
+    rgba(1, 11, 17, 0) 74%
+  );
+  pointer-events: none;
+}
+
+.rot-interactive-area {
+  position: relative;
+  width: 100%;
+  max-width: 56rem; /* max-w-4xl */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto; /* Catch clicks */
+  z-index: 1;
+}
+
+.rot-orbit {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-out;
+}
+
+/* Core glowing element in center */
+.rot-core-glow {
+  position: absolute;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: linear-gradient(to bottom right, #61efff, #00aeb7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: rot-pulse 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 22px rgba(52, 226, 243, 0.42);
+  transform: translateZ(24px);
+  pointer-events: none;
+}
+
+.rot-core-ring-1 {
+  position: absolute;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: rot-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  opacity: 0.7;
+}
+
+.rot-core-ring-2 {
+  position: absolute;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: rot-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation-delay: 0.5s;
+  opacity: 0.5;
+}
+
+.rot-core-inner {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.rot-orbital-path {
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.22);
+  transform: rotateX(58deg);
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Node Elements */
+.rot-node-wrapper {
+  position: absolute;
+  transition: all 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+}
+
+.rot-node-energy {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 243, 255, 0.34) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.rot-node-energy.is-pulsing {
+  animation: rot-pulse 1000ms cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.rot-node-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rot-node-icon.state-expanded {
+  background-color: white;
+  color: black;
+  border-color: white;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  transform: scale(1.5);
+}
+
+.rot-node-icon.state-related {
+  background-color: rgba(255, 255, 255, 0.5);
+  color: black;
+  border-color: white;
+  animation: rot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.rot-node-icon.state-default {
+  background-color: rgba(1, 14, 21, 0.92);
+  color: #dffcff;
+  border-color: rgba(116, 239, 255, 0.9);
+  box-shadow: 0 0 16px rgba(53, 224, 242, 0.24), inset 0 0 10px rgba(53, 224, 242, 0.12);
+}
+
+.rot-node-title {
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rot-node-title.state-expanded {
+  color: white;
+  transform: translateX(-50%) scale(1.25);
+  margin-top: 0.5rem;
+}
+
+.rot-node-title.state-default {
+  color: rgba(222, 250, 255, 0.94);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95), 0 0 12px rgba(58, 220, 238, 0.28);
+}
+
+/* Custom Minimal Card (Replacing Shadcn) */
+.rot-card {
+  position: absolute;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16rem;
+  background-color: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.05);
+  border-radius: 4px; /* Slightly rounded, premium look */
+  padding: 1rem;
+  color: white;
+  z-index: 250;
+  overflow: visible;
+}
+
+.rot-card-connector {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 12px;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.rot-card--above {
+  top: auto;
+  bottom: 5rem;
+}
+
+.rot-card--above .rot-card-connector {
+  top: auto;
+  bottom: -12px;
+}
+
+.rot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rot-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+}
+
+.rot-card-content {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
+
+.rot-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+.rot-badge-completed { color: white; background-color: transparent; border-color: #00ffcc; }
+.rot-badge-inprogress { color: #000; background-color: #00ffcc; border-color: #00ffcc; }
+.rot-badge-pending { color: rgba(255, 255, 255, 0.5); background-color: transparent; border-color: rgba(255, 255, 255, 0.3); }
+
+.rot-card-date {
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.rot-energy-bar-container {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rot-energy-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  margin-bottom: 0.25rem;
+}
+
+.rot-energy-track {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.rot-energy-fill {
+  height: 100%;
+  background: linear-gradient(to right, #00f3ff, #3b82f6);
+}
+
+.rot-connections-container {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rot-connections-header {
+  display: flex;
+  align-items: center;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.rot-connections-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.rot-button {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.7rem;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.rot-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Animations */
+@keyframes rot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+@keyframes rot-ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}

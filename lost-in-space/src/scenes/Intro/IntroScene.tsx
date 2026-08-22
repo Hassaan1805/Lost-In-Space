@@ -1,188 +1,75 @@
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Suspense, useRef, useEffect } from 'react';
-import { Html } from '@react-three/drei';
-import { LightingManager } from '../../systems/LightingManager';
+import { useFrame } from '@react-three/fiber';
+import { useMemo } from 'react';
 import { useCameraController } from '../../systems/CameraController';
+import { LightingManager } from '../../systems/LightingManager';
+import { useScrollController } from '../../systems/ScrollController';
+import { Starfield } from './Starfield';
+import { Earth } from './Earth';
+import { EARTH_JOURNEY_END, PHASE_FOUR_START, OrbitSequence } from './OrbitSequence';
 import * as THREE from 'three';
+import gsap from 'gsap';
 
-const createStarPositions = (count: number) => {
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const radius = 50 + Math.random() * 300;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = radius * Math.cos(phi);
-  }
-  return positions;
-};
-
-const createStarSizes = (count: number) => {
-  const sizes = new Float32Array(count);
-  for (let i = 0; i < count; i++) {
-    sizes[i] = 0.5 + Math.random() * 1.5;
-  }
-  return sizes;
-};
-
-const createStarColors = (count: number) => {
-  const colors = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const variation = 0.8 + Math.random() * 0.2;
-    colors[i * 3] = variation;
-    colors[i * 3 + 1] = variation;
-    colors[i * 3 + 2] = variation;
-  }
-  return colors;
-};
-
-const Earth = () => {
-  const earthRef = useRef<THREE.Mesh>(null);
-
-  useEffect(() => {
-    const mesh = earthRef.current;
-    if (!mesh) return;
-
-    const animate = (timestamp: number) => {
-      mesh.rotation.y += 0.0001;
-      requestAnimationFrame(animate);
-    };
-    animate(0);
-  }, []);
-
-  return (
-    <group ref={earthRef}>
-      <mesh
-        receiveShadow
-        castShadow
-        position={[0, 0, -80]}
-        scale={12}
-      >
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshStandardMaterial
-          color="#1a3a5c"
-          roughness={0.8}
-          metalness={0.1}
-        />
-      </mesh>
-      <mesh
-        position={[0, 0, -80]}
-        scale={12.15}
-      >
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshBasicMaterial
-          color="#4a90d9"
-          transparent
-          opacity={0.15}
-          side={THREE.BackSide}
-        />
-      </mesh>
-    </group>
-  );
-};
-
-const Starfield = () => {
-  const starsRef = useRef<THREE.Points>(null);
-  const positionsRef = useRef<Float32Array>(new Float32Array());
-
-  useEffect(() => {
-    const points = starsRef.current;
-    if (!points) return;
-
-    const pos = points.geometry.attributes.position;
-    positionsRef.current = new Float32Array(pos.array);
-
-    const animate = (timestamp: number) => {
-      for (let i = 0; i < pos.count; i++) {
-        const idx = i * 3;
-        pos.array[idx + 2] += 0.02;
-        if (pos.array[idx + 2] > 100 && positionsRef.current) {
-          pos.array[idx + 2] = positionsRef.current[idx + 2] - 200;
-        }
-      }
-      pos.needsUpdate = true;
-      requestAnimationFrame(animate);
-    };
-    animate(0);
-  }, []);
-
-  const starCount = 8000;
-
-  return (
-    <points ref={starsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[createStarPositions(starCount), 3]}
-        />
-        <bufferAttribute
-          attach="attributes-size"
-          args={[createStarSizes(starCount), 1]}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          args={[createStarColors(starCount), 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={1}
-        sizeAttenuation
-        transparent
-        opacity={0.9}
-        vertexColors
-        depthWrite={false}
-      />
-    </points>
-  );
-};
-
-const CameraUpdater = ({ cameraController }: { cameraController: ReturnType<typeof useCameraController> }) => {
-  useFrame((_, delta) => {
-    cameraController.update(delta);
-  });
-  return null;
-};
-
-const IntroContent = () => {
+export const IntroScene = () => {
   const cameraController = useCameraController();
+  const scrollController = useScrollController();
+  
+  // Earth's position in the scene
+  const earthPosition = useMemo(() => new THREE.Vector3(0, 0, -80), []);
 
-  useEffect(() => {
-    const target = new THREE.Vector3(0, 0, -80);
-    const offset = new THREE.Vector3(0, 5, 50);
+  useFrame(() => {
+    const fullJourneyProgress = scrollController.getProgress();
+    // Keep Phases 1–3 at the same physical scroll positions after the orbit chapter.
+    const progress = Math.min(fullJourneyProgress / EARTH_JOURNEY_END, 1);
+    
+    // We map the 0-1 progress to specific camera positions
+    // Progress mapping:
+    // 0.00 -> Far deep space (intro)
+    // 0.45 -> Start approaching Earth
+    // 0.70 -> Approaching fast
+    // 1.00 -> Orbit position
+    
+    // Default/start positions
+    const startOffset = new THREE.Vector3(0, 10, 250); 
+    const endOffset = new THREE.Vector3(0, 5, 40); // Orbiting distance
+    
+    // Calculate current offset using an ease for cinematic feel
+    const currentOffset = new THREE.Vector3();
+    
+    if (progress < 0.25) {
+      // Very slow drift initially
+      const subProgress = progress / 0.25;
+      currentOffset.lerpVectors(startOffset, new THREE.Vector3(0, 10, 230), subProgress);
+    } else if (progress < 0.7) {
+      // Faster approach as Earth appears
+      const subProgress = (progress - 0.25) / 0.45;
+      const ease = gsap.parseEase('power2.inOut')(subProgress);
+      currentOffset.lerpVectors(new THREE.Vector3(0, 10, 230), new THREE.Vector3(0, 8, 100), ease);
+    } else {
+      // Final approach to orbit
+      const subProgress = (progress - 0.7) / 0.3;
+      const ease = gsap.parseEase('power3.out')(subProgress);
+      currentOffset.lerpVectors(new THREE.Vector3(0, 8, 100), endOffset, ease);
+    }
 
-    const animate = (timestamp: number) => {
-      cameraController.setTarget(target, 0.01);
-      cameraController.setOffset(offset, 0.01);
-      requestAnimationFrame(animate);
-    };
-    animate(0);
-  }, [cameraController]);
+    if (fullJourneyProgress > PHASE_FOUR_START) {
+      const orbitProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_FOUR_START) / (1 - PHASE_FOUR_START),
+      );
+      const ease = gsap.parseEase('power2.inOut')(orbitProgress);
+      currentOffset.lerpVectors(endOffset, new THREE.Vector3(28, 12, 28), ease);
+    }
+
+    cameraController.setTarget(earthPosition, 0.05);
+    cameraController.setOffset(currentOffset, 0.05);
+  });
 
   return (
     <>
       <Starfield />
-      <Earth />
+      <Earth position={[0, 0, -80]} />
+      <OrbitSequence earthPosition={earthPosition} />
       <LightingManager />
-      <CameraUpdater cameraController={cameraController} />
     </>
-  );
-};
-
-export const IntroScene = () => {
-  return (
-    <Canvas
-      style={{ width: '100%', height: '100%', display: 'block' }}
-      camera={{ position: [0, 5, 50], fov: 50 }}
-      gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
-      onCreated={({ gl }) => {
-        (gl as THREE.WebGLRenderer).setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        gl.setClearColor(0x000000, 1);
-      }}
-    >
-      <Suspense fallback={<Html center>Loading...</Html>}>
-        <IntroContent />
-      </Suspense>
-    </Canvas>
   );
 };

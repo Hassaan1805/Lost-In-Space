@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useRef } from 'react';
 import { Vector3, Euler, Quaternion, Matrix4 } from 'three';
-import { useThreeContext } from './SceneManager';
+import { useThree, useFrame } from '@react-three/fiber';
 
 export type CameraMode = 'orbit' | 'firstPerson' | 'cinematic' | 'scrollLinked' | 'fixed';
 
@@ -236,24 +236,34 @@ class CameraControllerClass implements CameraControllerAPI {
 
 export const CameraController = new CameraControllerClass();
 
+// Provider component - makes CameraController available via React context.
+// Place this OUTSIDE the Canvas so both Canvas children and HTML overlays can access it.
 interface CameraControllerProviderProps {
   children: React.ReactNode;
 }
 
 export const CameraControllerProvider: React.FC<CameraControllerProviderProps> = ({ children }) => {
-  const { camera } = useThreeContext();
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    if (camera && !initialized) {
-      CameraController.setCamera(camera);
-      setInitialized(true);
-    }
-  }, [camera, initialized]);
-
   return (
     <CameraContext.Provider value={CameraController}>
       {children}
     </CameraContext.Provider>
   );
+};
+
+// Bridge component - must be rendered INSIDE the Canvas.
+// Connects the R3F camera to the CameraController singleton.
+export const CameraBridge: React.FC = () => {
+  const { camera } = useThree();
+  const initialized = useRef(false);
+
+  if (camera && !initialized.current) {
+    CameraController.setCamera(camera);
+    initialized.current = true;
+  }
+
+  useFrame((_, delta) => {
+    CameraController.update(delta);
+  });
+
+  return null;
 };

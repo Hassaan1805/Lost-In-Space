@@ -1,29 +1,37 @@
 import { useMemo } from 'react';
 import { Vector2 } from 'three';
+import { Environment } from '@react-three/drei';
 
 export const LightingManager = () => {
   const lights = useMemo(() => [
-    // Ambient light for overall illumination
-    <ambientLight key="ambient" color={0xffffff} intensity={0.5} />,
-    // Hemisphere light for natural sky/ground tones
-    <hemisphereLight key="hemi" color={0x87ceeb} groundColor={0x444444} intensity={0.6} />,
-    // Directional light acting as sun
+    // Very dim ambient light for deep space
+    <ambientLight key="ambient" color={0xffffff} intensity={0.02} />,
+    
+    // Directional light acting as the strong sun
     <directionalLight
       key="directional"
       color={0xffffff}
-      intensity={1}
-      position={[5, 10, 7.5]}
+      intensity={2.5}
+      position={[50, 10, -50]}
       castShadow
       // @ts-ignore
       shadowMapSize={new Vector2(2048, 2048)}
       shadowCameraNear={0.5}
-      shadowCameraFar={50}
-      shadowCameraLeft={-10}
-      shadowCameraRight={10}
-      shadowCameraTop={10}
-      shadowCameraBottom={-10}
+      shadowCameraFar={500}
+      shadowCameraLeft={-50}
+      shadowCameraRight={50}
+      shadowCameraTop={50}
+      shadowCameraBottom={-50}
     />,
   ], []);
 
-  return <>{lights}</>;
+  return (
+    <>
+      {lights}
+      <Environment 
+        files="/hdri/NightSkyHDRI003_4K/NightSkyHDRI003_4K_TONEMAPPED.jpg" 
+        background={false} 
+      />
+    </>
+  );
 };

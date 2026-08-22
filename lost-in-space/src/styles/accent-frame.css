@@ -1,0 +1,155 @@
+/* ================================================================
+   Accent Frame Styles (Vanilla CSS translation)
+   ================================================================ */
+
+.af-wrapper {
+  position: relative;
+  padding: 1.5rem 1.5rem;
+}
+
+/* Background variants */
+.af-bg-solid {
+  background-color: #0a0a0a;
+}
+.af-bg-subtle {
+  background-color: color-mix(in srgb, var(--af-color-a, #00f3ff) 6%, transparent);
+}
+
+/* Base corner piece */
+.af-corner,
+.af-corner-b {
+  position: absolute;
+  transition-property: width, height, box-shadow, opacity;
+  transition-duration: var(--af-duration, 300ms);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.af-corner-rounded {
+  border-radius: 2px;
+}
+
+/* Colors */
+.af-bg-a { background-color: var(--af-color-a, #00f3ff); }
+.af-bg-b { background-color: var(--af-color-b, var(--af-color-a, #00f3ff)); }
+
+/* Dimensions */
+.af-h-thickness { height: var(--af-thickness, 2px); }
+.af-w-thickness { width: var(--af-thickness, 2px); }
+.af-w-length { width: var(--af-corner-length, 16px); }
+.af-h-length { height: var(--af-corner-length, 16px); }
+
+/* Hover Expansions */
+.af-wrapper:hover .af-hover-w-expand { width: var(--af-hover-length, 32px); }
+.af-wrapper:hover .af-hover-h-expand { height: var(--af-hover-length, 32px); }
+
+/* Positions */
+.af-top-0 { top: 0; }
+.af-bottom-0 { bottom: 0; }
+.af-left-0 { left: 0; }
+.af-right-0 { right: 0; }
+
+.af-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* ---- Glow intensity (sets --af-glow-size) ------------------ */
+.af-glow-low { --af-glow-size: 5px; }
+.af-glow-medium { --af-glow-size: 10px; }
+.af-glow-high { --af-glow-size: 22px; }
+
+/* ---- Hover effect: glow ------------------------------------ */
+.af-hover-glow:hover .af-corner {
+  box-shadow:
+    0 0 var(--af-glow-size, 10px) var(--af-color-a, #00f3ff),
+    0 0 calc(var(--af-glow-size, 10px) * 2.2) color-mix(in srgb, var(--af-color-a, #00f3ff) 40%, transparent);
+}
+
+.af-hover-glow:hover .af-corner-b {
+  box-shadow:
+    0 0 var(--af-glow-size, 10px) var(--af-color-b, var(--af-color-a, #00f3ff)),
+    0 0 calc(var(--af-glow-size, 10px) * 2.2) color-mix(in srgb, var(--af-color-b, var(--af-color-a, #00f3ff)) 40%, transparent);
+}
+
+/* ---- Hover effect: pulse ------------------------------------ */
+@keyframes af-pulse-a {
+  0%, 100% { box-shadow: 0 0 var(--af-glow-size, 10px) var(--af-color-a, #00f3ff); }
+  50% {
+    box-shadow:
+      0 0 calc(var(--af-glow-size, 10px) * 2.5) var(--af-color-a, #00f3ff),
+      0 0 calc(var(--af-glow-size, 10px) * 4.5) color-mix(in srgb, var(--af-color-a, #00f3ff) 30%, transparent);
+  }
+}
+
+@keyframes af-pulse-b {
+  0%, 100% { box-shadow: 0 0 var(--af-glow-size, 10px) var(--af-color-b, var(--af-color-a, #00f3ff)); }
+  50% {
+    box-shadow:
+      0 0 calc(var(--af-glow-size, 10px) * 2.5) var(--af-color-b, var(--af-color-a, #00f3ff)),
+      0 0 calc(var(--af-glow-size, 10px) * 4.5) color-mix(in srgb, var(--af-color-b, var(--af-color-a, #00f3ff)) 30%, transparent);
+  }
+}
+
+.af-hover-pulse:hover .af-corner { animation: af-pulse-a 1.4s ease-in-out infinite; }
+.af-hover-pulse:hover .af-corner-b { animation: af-pulse-b 1.4s ease-in-out infinite; }
+
+/* ---- Hover effect: flicker --------------------------------- */
+@keyframes af-flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.12; }
+}
+.af-hover-flicker:hover .af-corner,
+.af-hover-flicker:hover .af-corner-b {
+  animation: af-flicker 0.45s linear infinite;
+}
+
+/* ---- Hover effect: trace ----------------------------------- */
+@keyframes af-trace-h {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes af-trace-v {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 200%; }
+}
+
+.af-hover-trace:hover .af-corner,
+.af-hover-trace:hover .af-corner-b {
+  background-size: 200% 200%;
+  background-image: linear-gradient(
+    90deg,
+    var(--af-color-a, #00f3ff) 0%,
+    color-mix(in srgb, white 70%, var(--af-color-a, #00f3ff)) 50%,
+    var(--af-color-a, #00f3ff) 100%
+  );
+  animation: af-trace-h 1s linear infinite;
+}
+
+/* ---- Always-animated (animated=true) ----------------------- */
+.af-animated.af-hover-glow .af-corner {
+  box-shadow:
+    0 0 var(--af-glow-size, 10px) var(--af-color-a, #00f3ff),
+    0 0 calc(var(--af-glow-size, 10px) * 2.2) color-mix(in srgb, var(--af-color-a, #00f3ff) 40%, transparent);
+}
+.af-animated.af-hover-glow .af-corner-b {
+  box-shadow:
+    0 0 var(--af-glow-size, 10px) var(--af-color-b, var(--af-color-a, #00f3ff)),
+    0 0 calc(var(--af-glow-size, 10px) * 2.2) color-mix(in srgb, var(--af-color-b, var(--af-color-a, #00f3ff)) 40%, transparent);
+}
+
+.af-animated.af-hover-pulse .af-corner { animation: af-pulse-a 1.4s ease-in-out infinite; }
+.af-animated.af-hover-pulse .af-corner-b { animation: af-pulse-b 1.4s ease-in-out infinite; }
+.af-animated.af-hover-flicker .af-corner,
+.af-animated.af-hover-flicker .af-corner-b { animation: af-flicker 0.45s linear infinite; }
+
+.af-animated.af-hover-trace .af-corner,
+.af-animated.af-hover-trace .af-corner-b {
+  background-size: 200% 200%;
+  background-image: linear-gradient(
+    90deg,
+    var(--af-color-a, #00f3ff) 0%,
+    color-mix(in srgb, white 70%, var(--af-color-a, #00f3ff)) 50%,
+    var(--af-color-a, #00f3ff) 100%
+  );
+  animation: af-trace-h 1s linear infinite;
+}

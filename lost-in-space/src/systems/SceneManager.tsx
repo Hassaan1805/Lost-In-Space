@@ -139,7 +139,11 @@ export const SceneManagerCanvas: React.FC<{
     antialias?: boolean;
     alpha?: boolean;
   };
-}> = ({ children, renderConfig = {} }) => {
+  cameraConfig?: {
+    position?: [number, number, number];
+    fov?: number;
+  };
+}> = ({ children, renderConfig = {}, cameraConfig = {} }) => {
   const [threeContext, setThreeContext] = useState<ThreeContextValue>(defaultThreeContext);
 
   useEffect(() => {
@@ -149,13 +153,19 @@ export const SceneManagerCanvas: React.FC<{
   return (
     <ThreeContext.Provider value={threeContext}>
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 60 }}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+        camera={{
+          position: cameraConfig.position ?? [0, 0, 5],
+          fov: cameraConfig.fov ?? 60,
+        }}
         gl={{
           antialias: renderConfig.antialias ?? true,
           alpha: renderConfig.alpha ?? true,
           preserveDrawingBuffer: false,
         }}
         onCreated={({ gl, scene, camera, size }) => {
+          (gl as WebGLRenderer).setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          gl.setClearColor(0x000000, 1);
           const clock = new Clock();
           const composer = new EffectComposer(gl);
           setThreeContext({
