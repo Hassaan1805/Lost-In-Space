@@ -14,7 +14,7 @@ html, body, #root {
 
 /* We need a tall page to allow Lenis/ScrollTrigger to work */
 .scroll-container {
-  height: 600vh;
+  height: 1100vh;
   position: relative;
 }
 
@@ -24,6 +24,19 @@ html, body, #root {
   left: 0;
   width: 100%;
   min-height: 110vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.moon-story {
+  position: absolute;
+  top: 960vh; /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
   display: flex;
   align-items: center;
   padding: 0 12vw;

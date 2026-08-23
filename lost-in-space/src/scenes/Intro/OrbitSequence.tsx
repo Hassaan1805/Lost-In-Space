@@ -4,10 +4,13 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { useScrollController } from '../../systems/ScrollController';
 
-// The original intro/Earth journey occupies the first 400vh. The following
-// 80vh is a deliberate hold for the Phase 3 orbital navigation before Phase 4.
-export const EARTH_JOURNEY_END = 400 / 600;
-export const PHASE_FOUR_START = 480 / 600;
+export const TOTAL_SCROLL_VH = 1100;
+// We divide the original vh targets by the new TOTAL_SCROLL_VH
+// so the checkpoints occur at the exact same physical pixel depth.
+export const EARTH_JOURNEY_END = 400 / TOTAL_SCROLL_VH;
+export const PHASE_FOUR_START = 480 / TOTAL_SCROLL_VH;
+export const ORBIT_STABLE_START = 520 / TOTAL_SCROLL_VH;
+export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -91,10 +94,18 @@ export const OrbitSequence = ({ earthPosition }: OrbitSequenceProps) => {
 
   useFrame(() => {
     const journeyProgress = scrollController.getProgress();
-    const orbitProgress = clamp01(
-      (journeyProgress - PHASE_FOUR_START) / (1 - PHASE_FOUR_START),
+    
+    // Reveal completes by the time the camera stabilizes in orbit
+    const orbitRevealProgress = clamp01(
+      (journeyProgress - PHASE_FOUR_START) / (ORBIT_STABLE_START - PHASE_FOUR_START),
     );
-    const reveal = smoothStep(orbitProgress * 1.35);
+    
+    // Satellite drift continues throughout the entire orbit chapter
+    const orbitDriftProgress = clamp01(
+      (journeyProgress - PHASE_FOUR_START) / (PHASE_FIVE_START - PHASE_FOUR_START),
+    );
+    
+    const reveal = smoothStep(orbitRevealProgress * 1.35);
 
     if (orbitGroupRef.current) {
       orbitGroupRef.current.visible = reveal > 0.001;
@@ -113,7 +124,7 @@ export const OrbitSequence = ({ earthPosition }: OrbitSequenceProps) => {
       // Keep the satellite on the camera-facing part of the orbit for the
       // whole chapter. A full sweep reads as a disappearance once it passes
       // behind Earth, while this smaller drift keeps the orbital asset present.
-      const angle = 0.65 + orbitProgress * 0.55;
+      const angle = 0.65 + orbitDriftProgress * 0.55;
       const radius = 22;
       const point = new THREE.Vector3(
         Math.cos(angle) * radius,

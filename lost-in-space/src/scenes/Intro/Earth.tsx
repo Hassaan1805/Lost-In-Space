@@ -2,6 +2,8 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { useScrollController } from '../../systems/ScrollController';
+import { PHASE_FIVE_START } from '../Intro/OrbitSequence';
 
 const FresnelShader = {
   uniforms: {
@@ -9,6 +11,7 @@ const FresnelShader = {
     'p': { type: 'f', value: 2.0 },
     glowColor: { type: 'c', value: new THREE.Color(0x00aaff) },
     viewVector: { type: 'v3', value: new THREE.Vector3() },
+    uDim: { type: 'f', value: 1.0 },
   },
   vertexShader: `
     uniform vec3 viewVector;
@@ -24,10 +27,11 @@ const FresnelShader = {
   `,
   fragmentShader: `
     uniform vec3 glowColor;
+    uniform float uDim;
     varying float intensity;
     void main() {
-      vec3 glow = glowColor * intensity;
-      gl_FragColor = vec4( glow, intensity * 0.5 );
+      vec3 glow = glowColor * intensity * uDim;
+      gl_FragColor = vec4( glow, intensity * 0.5 * uDim );
     }
   `,
   side: THREE.BackSide,
@@ -39,6 +43,8 @@ const FresnelShader = {
 export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, number] }) => {
   const earthRef = useRef<THREE.Group>(null);
   const atmosphereRef = useRef<THREE.Mesh>(null);
+  const cloudRef = useRef<THREE.Mesh>(null);
+  const scrollController = useScrollController();
   
   // Preload the earth model
   const { scene } = useGLTF('/textures/planets/earth/earth.glb');
@@ -53,6 +59,9 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
   // Atmosphere shader material
   const atmosphereMaterial = useMemo(() => new THREE.ShaderMaterial(FresnelShader), []);
 
+  // Store original material colors so we can restore them when scrolling back
+  const originalColors = useRef<Map<string, THREE.Color>>(new Map());
+
   useFrame((state) => {
     if (earthRef.current) {
       // Slow rotation for the Earth
@@ -66,6 +75,43 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
         atmosphereRef.current.getWorldPosition(new THREE.Vector3())
       );
     }
+
+    // --- Phase 5 de-emphasis ---
+    const progress = scrollController.getProgress();
+    // Smooth ramp: 0 before Phase 5, ramps to 1 over the first 30% of Phase 5
+    const moonRamp = Math.min(1, Math.max(0, (progress - PHASE_FIVE_START) / ((1 - PHASE_FIVE_START) * 0.30)));
+    // Cubic ease for smooth transition
+    const moonBlend = moonRamp * moonRamp * (3 - 2 * moonRamp);
+    // dimFactor: 1.0 = full brightness, 0.3 = significantly dimmed
+    const dimFactor = 1.0 - moonBlend * 0.7;
+
+    // Dim the atmosphere glow via the shader uniform
+    atmosphereMaterial.uniforms.uDim.value = dimFactor;
+
+    // Dim the cloud layer
+    if (cloudRef.current) {
+      const cloudMat = cloudRef.current.material as THREE.MeshStandardMaterial;
+      cloudMat.opacity = 0.3 * dimFactor;
+    }
+
+    // Dim the Earth model materials
+    if (earthRef.current) {
+      earthRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const mat = child.material as THREE.MeshStandardMaterial;
+          if (!mat.color) return;
+
+          const id = child.uuid;
+          // Cache the original color on first encounter
+          if (!originalColors.current.has(id)) {
+            originalColors.current.set(id, mat.color.clone());
+          }
+          const orig = originalColors.current.get(id)!;
+          // Lerp material color toward a darker version
+          mat.color.copy(orig).multiplyScalar(dimFactor);
+        }
+      });
+    }
   });
 
   return (
@@ -75,7 +121,7 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
         <primitive object={earthModel} />
         
         {/* Optional Cloud Layer (slightly larger than earth) */}
-        <mesh scale={1.01}>
+        <mesh ref={cloudRef} scale={1.01}>
           <sphereGeometry args={[1, 64, 64]} />
           <meshStandardMaterial 
             map={cloudsTexture} 

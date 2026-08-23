@@ -8,6 +8,7 @@ import { HUD } from './components/HUD';
 import { IntroOverlay } from './components/IntroOverlay';
 import { EarthStory } from './components/EarthStory';
 import { OrbitStory } from './components/OrbitStory';
+import { MoonStory } from './components/MoonStory';
 import { AudioManager } from './components/AudioManager';
 import './style.css';
 
@@ -23,6 +24,7 @@ function App() {
           <IntroOverlay />
           <EarthStory />
           <OrbitStory />
+          <MoonStory />
 
           <div className="canvas-container">
             <SceneManagerCanvas
