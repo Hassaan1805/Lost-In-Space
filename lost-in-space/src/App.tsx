@@ -13,6 +13,8 @@ import { MarsStory } from './components/MarsStory';
 import { JupiterStory } from './components/JupiterStory';
 import { SaturnStory } from './components/SaturnStory';
 import { UranusStory } from './components/UranusStory';
+import { NeptuneStory } from './components/NeptuneStory';
+import { FinalStory } from './components/FinalStory';
 import { AudioManager } from './components/AudioManager';
 import './style.css';
 
@@ -33,6 +35,8 @@ function App() {
           <JupiterStory />
           <SaturnStory />
           <UranusStory />
+          <NeptuneStory />
+          <FinalStory />
 
           <div className="canvas-container">
             <SceneManagerCanvas

@@ -5,12 +5,14 @@ import { LightingManager } from '../../systems/LightingManager';
 import { useScrollController } from '../../systems/ScrollController';
 import { Starfield } from './Starfield';
 import { Earth } from './Earth';
-import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START, PHASE_EIGHT_START, PHASE_NINE_START, OrbitSequence } from './OrbitSequence';
+import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START, PHASE_EIGHT_START, PHASE_NINE_START, PHASE_TEN_START, PHASE_ELEVEN_START, OrbitSequence } from './OrbitSequence';
 import { MoonSequence } from './MoonSequence';
 import { MarsSequence } from './MarsSequence';
 import { JupiterSequence } from './JupiterSequence';
 import { SaturnSequence } from './SaturnSequence';
 import { UranusSequence } from './UranusSequence';
+import { NeptuneSequence } from './NeptuneSequence';
+import { GalaxyEnvironment } from './GalaxyEnvironment';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
@@ -37,6 +39,9 @@ export const IntroScene = () => {
   // Uranus's position further in deep space
   const uranusPosition = useMemo(() => new THREE.Vector3(6000, -300, -7500), []);
   const uranusVisualTarget = useMemo(() => uranusPosition.clone().add(new THREE.Vector3(-30, 0, 0)), [uranusPosition]);
+  // Neptune's position further in deep space
+  const neptunePosition = useMemo(() => new THREE.Vector3(8200, -400, -10500), []);
+  const neptuneVisualTarget = useMemo(() => neptunePosition.clone().add(new THREE.Vector3(-30, 0, 0)), [neptunePosition]);
 
   useFrame(() => {
     const fullJourneyProgress = scrollController.getProgress();
@@ -301,7 +306,7 @@ export const IntroScene = () => {
     if (fullJourneyProgress > PHASE_NINE_START) {
       const uranusProgress = Math.min(
         1,
-        (fullJourneyProgress - PHASE_NINE_START) / (1 - PHASE_NINE_START)
+        (fullJourneyProgress - PHASE_NINE_START) / (PHASE_TEN_START - PHASE_NINE_START)
       );
 
       const p1 = 0.10; // Pull back
@@ -349,12 +354,84 @@ export const IntroScene = () => {
       }
     }
 
+    // Phase 10: Neptune Approach
+    if (fullJourneyProgress > PHASE_TEN_START) {
+      const neptuneProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_TEN_START) / (PHASE_ELEVEN_START - PHASE_TEN_START)
+      );
+
+      const p1 = 0.10; // Pull back
+      const p2 = 0.25; // Turn to Neptune
+      const p3 = 0.45; // Travel to Neptune
+      const p4 = 0.60; // Arrive at final offset
+
+      // Base values at end of Uranus sequence
+      const finalUranusOffset = new THREE.Vector3(0, 10, 180);
+      const pullBackOffset = new THREE.Vector3(100, 40, 250);
+
+      const absCameraAtPullback = uranusPosition.clone().add(pullBackOffset);
+      const offsetAtPullbackLookingAtNeptune = absCameraAtPullback.clone().sub(neptuneVisualTarget);
+
+      // Travel starts far and swoops in
+      const approachOffset = new THREE.Vector3(400, 80, 800);
+      // Final framing: similar to Uranus, but pulled back to decrease size by 1.5x
+      const finalNeptuneOffset = new THREE.Vector3(0, 10, 270);
+
+      if (neptuneProgress < p1) {
+        const subP = neptuneProgress / p1;
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(uranusVisualTarget);
+        currentOffset.lerpVectors(finalUranusOffset, pullBackOffset, ease);
+      } else if (neptuneProgress < p2) {
+        const subP = (neptuneProgress - p1) / (p2 - p1);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.lerpVectors(uranusVisualTarget, neptuneVisualTarget, ease);
+        currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtNeptune, ease);
+      } else if (neptuneProgress < p3) {
+        const subP = (neptuneProgress - p2) / (p3 - p2);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(neptuneVisualTarget);
+        currentOffset.lerpVectors(offsetAtPullbackLookingAtNeptune, approachOffset, ease);
+      } else if (neptuneProgress < p4) {
+        const subP = (neptuneProgress - p3) / (p4 - p3);
+        const ease = gsap.parseEase('power3.out')(subP);
+        currentTarget.copy(neptuneVisualTarget);
+        currentOffset.lerpVectors(approachOffset, finalNeptuneOffset, ease);
+      } else {
+        const subP = (neptuneProgress - p4) / (1 - p4);
+        currentTarget.copy(neptuneVisualTarget);
+        const driftOffset = finalNeptuneOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalNeptuneOffset, driftOffset, subP);
+      }
+    }
+
+    // Phase 11: Beyond — camera slowly pulls away from Neptune into deep space
+    if (fullJourneyProgress > PHASE_ELEVEN_START) {
+      const beyondProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_ELEVEN_START) / (1 - PHASE_ELEVEN_START)
+      );
+
+      // Neptune's final camera state (must match the drift endpoint above)
+      const finalNeptuneOffset = new THREE.Vector3(0, 10, 270);
+
+      // Slowly pull away — camera recedes into deep space
+      // The final offset is very far from Neptune, making it a distant speck
+      const deepSpaceOffset = new THREE.Vector3(0, 60, 12000);
+
+      const ease = gsap.parseEase('power1.inOut')(beyondProgress);
+      currentTarget.copy(neptuneVisualTarget);
+      currentOffset.lerpVectors(finalNeptuneOffset, deepSpaceOffset, ease);
+    }
+
     cameraController.setTarget(currentTarget, 0.05);
     cameraController.setOffset(currentOffset, 0.05);
   });
 
   return (
     <>
+      <GalaxyEnvironment />
       <Starfield />
       <Earth position={earthPosition.toArray()} />
       <OrbitSequence earthPosition={earthPosition} />
@@ -363,6 +440,7 @@ export const IntroScene = () => {
       <JupiterSequence jupiterPosition={jupiterPosition} />
       <SaturnSequence saturnPosition={saturnPosition} />
       <UranusSequence uranusPosition={uranusPosition} />
+      <NeptuneSequence neptunePosition={neptunePosition} />
       <LightingManager />
     </>
   );

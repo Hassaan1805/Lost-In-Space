@@ -5,22 +5,26 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export const TOTAL_SCROLL_VH = 3100;
+export const TOTAL_SCROLL_VH = 4100;
 export const PHASE_FOUR_START = 480 / TOTAL_SCROLL_VH;
 export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
 export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
 export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
 export const PHASE_EIGHT_START = 2100 / TOTAL_SCROLL_VH;
 export const PHASE_NINE_START = 2600 / TOTAL_SCROLL_VH;
+export const PHASE_TEN_START = 3100 / TOTAL_SCROLL_VH;
+export const PHASE_ELEVEN_START = 3600 / TOTAL_SCROLL_VH;
 
 export interface CinematicPhase {
-  id: 'EARTH' | 'ORBIT' | 'MOON' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS';
+  id: 'EARTH' | 'ORBIT' | 'MOON' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE' | 'BEYOND';
   index: number;
   label: string;
   status: string;
 }
 
 export const getActivePhase = (progress: number): CinematicPhase => {
+  if (progress >= PHASE_ELEVEN_START) return { id: 'BEYOND', index: 9, label: '09 / 09 — BEYOND', status: 'JOURNEY COMPLETE' };
+  if (progress >= PHASE_TEN_START) return { id: 'NEPTUNE', index: 8, label: '08 / 09 — NEPTUNE', status: 'OUTERMOST PLANET' };
   if (progress >= PHASE_NINE_START) return { id: 'URANUS', index: 7, label: '07 / 09 — URANUS', status: 'ICE GIANT' };
   if (progress >= PHASE_EIGHT_START) return { id: 'SATURN', index: 6, label: '06 / 09 — SATURN', status: 'RINGED GIANT' };
   if (progress >= PHASE_SEVEN_START) return { id: 'JUPITER', index: 5, label: '05 / 09 — JUPITER', status: 'GAS GIANT' };
@@ -97,6 +101,7 @@ class ScrollControllerClass implements ScrollControllerAPI {
   private sectionEnterCallbacks: Map<string, Set<(progress: number) => void>> = new Map();
   private sectionLeaveCallbacks: Map<string, Set<() => void>> = new Map();
   private rafId: number | null = null;
+  private wheelListener: ((e: WheelEvent) => void) | null = null;
 
   init() {
     if (this.lenis) return;
@@ -120,6 +125,32 @@ class ScrollControllerClass implements ScrollControllerAPI {
       }
     });
     gsap.ticker.lagSmoothing(0);
+
+    // Add listener to loop back to the beginning when scrolling past the very end
+    this.wheelListener = (e: WheelEvent) => {
+      if (!this.lenis) return;
+      if (this.state.progress >= 0.999 && e.deltaY > 0) {
+        // Jump back to start immediately for a loop transition
+        this.lenis.scrollTo(0, { immediate: true });
+      }
+    };
+    window.addEventListener('wheel', this.wheelListener, { passive: true });
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!this.lenis) return;
+      if (this.state.progress >= 0.999) {
+        const touchEndY = e.touches[0].clientY;
+        if (touchStartY - touchEndY > 20) {
+          // Swiping up (scrolling down)
+          this.lenis.scrollTo(0, { immediate: true });
+        }
+      }
+    }, { passive: true });
 
     this.startRafLoop();
   }
@@ -291,6 +322,10 @@ class ScrollControllerClass implements ScrollControllerAPI {
     if (this.lenis) {
       this.lenis.destroy();
       this.lenis = null;
+    }
+    if (this.wheelListener) {
+      window.removeEventListener('wheel', this.wheelListener);
+      this.wheelListener = null;
     }
     gsap.ticker.remove(() => { });
   }

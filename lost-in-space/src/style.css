@@ -16,7 +16,7 @@ body,
 
 /* We need a tall page to allow Lenis/ScrollTrigger to work */
 .scroll-container {
-  height: 3100vh;
+  height: 4100vh;
   position: relative;
 }
 
@@ -93,6 +93,34 @@ body,
   position: absolute;
   top: 2960vh;
   /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.neptune-story {
+  position: absolute;
+  top: 3460vh;
+  /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.final-story {
+  position: absolute;
+  top: 3960vh;
+  /* Appears only when camera has settled into deep space */
   left: 0;
   width: 100%;
   min-height: 140vh;

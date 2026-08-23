@@ -2,12 +2,13 @@ import { useRef, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useScrollController } from '../../systems/ScrollController';
-import { EARTH_JOURNEY_END, PHASE_FOUR_START } from './OrbitSequence';
+import { EARTH_JOURNEY_END, PHASE_FOUR_START, PHASE_ELEVEN_START } from './OrbitSequence';
 
 const createStarPositions = (count: number) => {
   const positions = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    const radius = 20 + Math.random() * 400; // Wider spread
+    // Increase radius to comfortably surround the camera volume
+    const radius = 50 + Math.random() * 800;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
@@ -88,14 +89,43 @@ export const Starfield = () => {
       initialPositions.current = new Float32Array(pos.array);
     }
 
+    // Beyond progress adds an accelerating baseline drift
+    const beyondProgress = Math.max(0, Math.min(1, (fullJourneyProgress - PHASE_ELEVEN_START) / (1 - PHASE_ELEVEN_START)));
+    const beyondDrift = beyondProgress * 15.0;
+
+    // Wrap dimensions
+    const wrapRange = 1600;
+    const halfWrap = wrapRange / 2;
+    const camX = camera.position.x;
+    const camY = camera.position.y;
+    const camZ = camera.position.z;
+
     for (let i = 0; i < pos.count; i++) {
       const idx = i * 3;
-      (pos.array as Float32Array)[idx + 2] += driftSpeed * delta * 10;
 
-      // Loop stars back to the deep distance
-      if ((pos.array as Float32Array)[idx + 2] > camera.position.z + 50 && initialPositions.current) {
-        (pos.array as Float32Array)[idx + 2] = initialPositions.current[idx + 2] - 300;
-      }
+      // Multi-depth motion: pseudo-random speed per star based on its index
+      // Creates parallax even when camera is still
+      const depthMultiplier = 5 + (i % 15);
+      const totalSpeed = (driftSpeed + beyondDrift) * depthMultiplier;
+
+      // Update Z position (stars drift forward towards camera)
+      (pos.array as Float32Array)[idx + 2] += totalSpeed * delta;
+
+      // Wrap relative to camera to ensure stars are ALWAYS around the viewer
+      let x = (pos.array as Float32Array)[idx];
+      let y = (pos.array as Float32Array)[idx + 1];
+      let z = (pos.array as Float32Array)[idx + 2];
+
+      if (x > camX + halfWrap) x -= wrapRange;
+      if (x < camX - halfWrap) x += wrapRange;
+      if (y > camY + halfWrap) y -= wrapRange;
+      if (y < camY - halfWrap) y += wrapRange;
+      if (z > camZ + halfWrap) z -= wrapRange;
+      if (z < camZ - halfWrap) z += wrapRange;
+
+      (pos.array as Float32Array)[idx] = x;
+      (pos.array as Float32Array)[idx + 1] = y;
+      (pos.array as Float32Array)[idx + 2] = z;
     }
     pos.needsUpdate = true;
 

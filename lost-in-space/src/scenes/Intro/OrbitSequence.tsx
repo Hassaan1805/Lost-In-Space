@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { useScrollController } from '../../systems/ScrollController';
 
-export const TOTAL_SCROLL_VH = 3100;
+export const TOTAL_SCROLL_VH = 4100;
 // We divide the original vh targets by the new TOTAL_SCROLL_VH
 // so the checkpoints occur at the exact same physical pixel depth.
 export const EARTH_JOURNEY_END = 400 / TOTAL_SCROLL_VH;
@@ -15,6 +15,8 @@ export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
 export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
 export const PHASE_EIGHT_START = 2100 / TOTAL_SCROLL_VH;
 export const PHASE_NINE_START = 2600 / TOTAL_SCROLL_VH;
+export const PHASE_TEN_START = 3100 / TOTAL_SCROLL_VH;
+export const PHASE_ELEVEN_START = 3600 / TOTAL_SCROLL_VH;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
