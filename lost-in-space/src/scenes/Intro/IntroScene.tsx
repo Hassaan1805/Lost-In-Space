@@ -5,10 +5,12 @@ import { LightingManager } from '../../systems/LightingManager';
 import { useScrollController } from '../../systems/ScrollController';
 import { Starfield } from './Starfield';
 import { Earth } from './Earth';
-import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START, OrbitSequence } from './OrbitSequence';
+import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START, PHASE_EIGHT_START, PHASE_NINE_START, OrbitSequence } from './OrbitSequence';
 import { MoonSequence } from './MoonSequence';
 import { MarsSequence } from './MarsSequence';
 import { JupiterSequence } from './JupiterSequence';
+import { SaturnSequence } from './SaturnSequence';
+import { UranusSequence } from './UranusSequence';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
@@ -26,8 +28,15 @@ export const IntroScene = () => {
   const marsPosition = useMemo(() => new THREE.Vector3(800, -50, -900), []);
   // Jupiter's position in deep space
   const jupiterPosition = useMemo(() => new THREE.Vector3(2000, -100, -2500), []);
-  // Offset target to the left so Jupiter's left edge is at the center of the screen
-  const jupiterVisualTarget = useMemo(() => jupiterPosition.clone().add(new THREE.Vector3(-60, 0, 0)), [jupiterPosition]);
+  // Offset target so Jupiter is centered
+  const jupiterVisualTarget = useMemo(() => jupiterPosition.clone().add(new THREE.Vector3(0, 0, 0)), [jupiterPosition]);
+  // Saturn's position in deep space
+  const saturnPosition = useMemo(() => new THREE.Vector3(3800, -200, -4500), []);
+  // Offset target left to keep Saturn in the right-center, scaled down for closer camera
+  const saturnVisualTarget = useMemo(() => saturnPosition.clone().add(new THREE.Vector3(-25, 0, 0)), [saturnPosition]);
+  // Uranus's position further in deep space
+  const uranusPosition = useMemo(() => new THREE.Vector3(6000, -300, -7500), []);
+  const uranusVisualTarget = useMemo(() => uranusPosition.clone().add(new THREE.Vector3(-30, 0, 0)), [uranusPosition]);
 
   useFrame(() => {
     const fullJourneyProgress = scrollController.getProgress();
@@ -80,7 +89,8 @@ export const IntroScene = () => {
 
       const p1 = 0.10; // Pull back
       const p2 = 0.25; // Turn to Moon
-      const p3 = 0.70; // Travel to Moon
+      const p3 = 0.45; // Travel to Moon
+      const p4 = 0.60; // Arrive at final offset
 
       const earthOrbitOffset = new THREE.Vector3(28, 12, 28);
       const pullBackOffset = new THREE.Vector3(60, 20, 60);
@@ -109,12 +119,16 @@ export const IntroScene = () => {
         const ease = gsap.parseEase('power2.inOut')(subP);
         currentTarget.copy(moonVisualTarget);
         currentOffset.lerpVectors(offsetAtPullbackLookingAtMoon, approachOffset, ease);
-      } else {
-        // Arrival: settle into orbit around Moon
-        const subP = (moonProgress - p3) / (1 - p3);
+      } else if (moonProgress < p4) {
+        const subP = (moonProgress - p3) / (p4 - p3);
         const ease = gsap.parseEase('power3.out')(subP);
         currentTarget.copy(moonVisualTarget);
         currentOffset.lerpVectors(approachOffset, finalMoonOffset, ease);
+      } else {
+        const subP = (moonProgress - p4) / (1 - p4);
+        currentTarget.copy(moonVisualTarget);
+        const driftOffset = finalMoonOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalMoonOffset, driftOffset, subP);
       }
       postMoonOffset.copy(currentOffset);
     }
@@ -128,9 +142,10 @@ export const IntroScene = () => {
         (fullJourneyProgress - PHASE_SIX_START) / (PHASE_SEVEN_START - PHASE_SIX_START)
       );
 
-      const p1 = 0.15; // Pull back from Moon
-      const p2 = 0.35; // Turn to Mars
-      const p3 = 0.75; // Travel to Mars
+      const p1 = 0.10; // Pull back
+      const p2 = 0.25; // Turn to Mars
+      const p3 = 0.45; // Travel to Mars
+      const p4 = 0.60; // Arrive at final offset
 
       // Base values at end of Moon sequence
       const finalMoonOffset = new THREE.Vector3(5, 3, 35);
@@ -157,26 +172,33 @@ export const IntroScene = () => {
         const ease = gsap.parseEase('power2.inOut')(subP);
         currentTarget.copy(marsPosition);
         currentOffset.lerpVectors(offsetAtPullbackLookingAtMars, approachOffset, ease);
-      } else {
-        const subP = (marsProgress - p3) / (1 - p3);
+      } else if (marsProgress < p4) {
+        const subP = (marsProgress - p3) / (p4 - p3);
         const ease = gsap.parseEase('power3.out')(subP);
         currentTarget.copy(marsPosition);
         currentOffset.lerpVectors(approachOffset, finalMarsOffset, ease);
+      } else {
+        const subP = (marsProgress - p4) / (1 - p4);
+        currentTarget.copy(marsPosition);
+        const driftOffset = finalMarsOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalMarsOffset, driftOffset, subP);
       }
       postMarsOffset.copy(currentOffset);
     }
     currentOffset.copy(postMarsOffset.lengthSq() > 0 ? postMarsOffset : currentOffset);
 
     // Phase 7: Jupiter Approach
+    let postJupiterOffset = new THREE.Vector3();
     if (fullJourneyProgress > PHASE_SEVEN_START) {
       const jupiterProgress = Math.min(
         1,
-        (fullJourneyProgress - PHASE_SEVEN_START) / (1 - PHASE_SEVEN_START)
+        (fullJourneyProgress - PHASE_SEVEN_START) / (PHASE_EIGHT_START - PHASE_SEVEN_START)
       );
 
-      const p1 = 0.15; // Pull back from Mars
-      const p2 = 0.35; // Turn to Jupiter
-      const p3 = 0.75; // Travel to Jupiter
+      const p1 = 0.10; // Pull back
+      const p2 = 0.25; // Turn to Jupiter
+      const p3 = 0.45; // Travel to Jupiter
+      const p4 = 0.60; // Arrive at final offset
 
       // Base values at end of Mars sequence
       const finalMarsOffset = new THREE.Vector3(15, 5, 60);
@@ -187,8 +209,8 @@ export const IntroScene = () => {
 
       // Travel starts far and swoops in
       const approachOffset = new THREE.Vector3(250, 40, 750);
-      // Final framing: distant enough to see the whole planet (radius 60, dist 450), target shifted -60 X
-      const finalJupiterOffset = new THREE.Vector3(0, 5, 450);
+      // Final framing: closer to make Jupiter slightly larger (dist 360)
+      const finalJupiterOffset = new THREE.Vector3(0, 5, 360);
 
       if (jupiterProgress < p1) {
         const subP = jupiterProgress / p1;
@@ -205,11 +227,125 @@ export const IntroScene = () => {
         const ease = gsap.parseEase('power2.inOut')(subP);
         currentTarget.copy(jupiterVisualTarget);
         currentOffset.lerpVectors(offsetAtPullbackLookingAtJupiter, approachOffset, ease);
-      } else {
-        const subP = (jupiterProgress - p3) / (1 - p3);
+      } else if (jupiterProgress < p4) {
+        const subP = (jupiterProgress - p3) / (p4 - p3);
         const ease = gsap.parseEase('power3.out')(subP);
         currentTarget.copy(jupiterVisualTarget);
         currentOffset.lerpVectors(approachOffset, finalJupiterOffset, ease);
+      } else {
+        const subP = (jupiterProgress - p4) / (1 - p4);
+        currentTarget.copy(jupiterVisualTarget);
+        const driftOffset = finalJupiterOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalJupiterOffset, driftOffset, subP);
+      }
+      postJupiterOffset.copy(currentOffset);
+    }
+    currentOffset.copy(postJupiterOffset.lengthSq() > 0 ? postJupiterOffset : currentOffset);
+
+    // Phase 8: Saturn Approach
+    let postSaturnOffset = new THREE.Vector3();
+    if (fullJourneyProgress > PHASE_EIGHT_START) {
+      const saturnProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_EIGHT_START) / (PHASE_NINE_START - PHASE_EIGHT_START)
+      );
+
+      const p1 = 0.10; // Pull back
+      const p2 = 0.25; // Turn to Saturn
+      const p3 = 0.45; // Travel to Saturn
+      const p4 = 0.60; // Arrive at final offset
+
+      // Base values at end of Jupiter sequence
+      const finalJupiterOffset = new THREE.Vector3(0, 5, 450);
+      const pullBackOffset = new THREE.Vector3(80, 30, 200);
+
+      const absCameraAtPullback = jupiterPosition.clone().add(pullBackOffset);
+      const offsetAtPullbackLookingAtSaturn = absCameraAtPullback.clone().sub(saturnVisualTarget);
+
+      // Travel starts far and swoops in
+      const approachOffset = new THREE.Vector3(300, 60, 600);
+      // Final framing: much closer to make Saturn command the scene (approx twice as large)
+      const finalSaturnOffset = new THREE.Vector3(0, 10, 130);
+
+      if (saturnProgress < p1) {
+        const subP = saturnProgress / p1;
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(jupiterVisualTarget);
+        currentOffset.lerpVectors(finalJupiterOffset, pullBackOffset, ease);
+      } else if (saturnProgress < p2) {
+        const subP = (saturnProgress - p1) / (p2 - p1);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.lerpVectors(jupiterVisualTarget, saturnVisualTarget, ease);
+        currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtSaturn, ease);
+      } else if (saturnProgress < p3) {
+        const subP = (saturnProgress - p2) / (p3 - p2);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(saturnVisualTarget);
+        currentOffset.lerpVectors(offsetAtPullbackLookingAtSaturn, approachOffset, ease);
+      } else if (saturnProgress < p4) {
+        const subP = (saturnProgress - p3) / (p4 - p3);
+        const ease = gsap.parseEase('power3.out')(subP);
+        currentTarget.copy(saturnVisualTarget);
+        currentOffset.lerpVectors(approachOffset, finalSaturnOffset, ease);
+      } else {
+        const subP = (saturnProgress - p4) / (1 - p4);
+        currentTarget.copy(saturnVisualTarget);
+        const driftOffset = finalSaturnOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalSaturnOffset, driftOffset, subP);
+      }
+      postSaturnOffset.copy(currentOffset);
+    }
+    currentOffset.copy(postSaturnOffset.lengthSq() > 0 ? postSaturnOffset : currentOffset);
+    
+    // Phase 9: Uranus Approach
+    if (fullJourneyProgress > PHASE_NINE_START) {
+      const uranusProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_NINE_START) / (1 - PHASE_NINE_START)
+      );
+
+      const p1 = 0.10; // Pull back
+      const p2 = 0.25; // Turn to Uranus
+      const p3 = 0.45; // Travel to Uranus
+      const p4 = 0.60; // Arrive at final offset
+
+      // Base values at end of Saturn sequence
+      const finalSaturnOffset = new THREE.Vector3(0, 10, 130);
+      const pullBackOffset = new THREE.Vector3(100, 40, 250);
+
+      const absCameraAtPullback = saturnPosition.clone().add(pullBackOffset);
+      const offsetAtPullbackLookingAtUranus = absCameraAtPullback.clone().sub(uranusVisualTarget);
+
+      // Travel starts far and swoops in
+      const approachOffset = new THREE.Vector3(400, 80, 800);
+      // Final framing: similar to Saturn
+      const finalUranusOffset = new THREE.Vector3(0, 10, 180);
+
+      if (uranusProgress < p1) {
+        const subP = uranusProgress / p1;
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(saturnVisualTarget);
+        currentOffset.lerpVectors(finalSaturnOffset, pullBackOffset, ease);
+      } else if (uranusProgress < p2) {
+        const subP = (uranusProgress - p1) / (p2 - p1);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.lerpVectors(saturnVisualTarget, uranusVisualTarget, ease);
+        currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtUranus, ease);
+      } else if (uranusProgress < p3) {
+        const subP = (uranusProgress - p2) / (p3 - p2);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(uranusVisualTarget);
+        currentOffset.lerpVectors(offsetAtPullbackLookingAtUranus, approachOffset, ease);
+      } else if (uranusProgress < p4) {
+        const subP = (uranusProgress - p3) / (p4 - p3);
+        const ease = gsap.parseEase('power3.out')(subP);
+        currentTarget.copy(uranusVisualTarget);
+        currentOffset.lerpVectors(approachOffset, finalUranusOffset, ease);
+      } else {
+        const subP = (uranusProgress - p4) / (1 - p4);
+        currentTarget.copy(uranusVisualTarget);
+        const driftOffset = finalUranusOffset.clone().multiplyScalar(0.95);
+        currentOffset.lerpVectors(finalUranusOffset, driftOffset, subP);
       }
     }
 
@@ -225,6 +361,8 @@ export const IntroScene = () => {
       <MoonSequence moonPosition={moonPosition} />
       <MarsSequence marsPosition={marsPosition} />
       <JupiterSequence jupiterPosition={jupiterPosition} />
+      <SaturnSequence saturnPosition={saturnPosition} />
+      <UranusSequence uranusPosition={uranusPosition} />
       <LightingManager />
     </>
   );

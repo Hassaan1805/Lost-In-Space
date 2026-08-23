@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { useScrollController } from '../../systems/ScrollController';
 
-export const TOTAL_SCROLL_VH = 2100;
+export const TOTAL_SCROLL_VH = 3100;
 // We divide the original vh targets by the new TOTAL_SCROLL_VH
 // so the checkpoints occur at the exact same physical pixel depth.
 export const EARTH_JOURNEY_END = 400 / TOTAL_SCROLL_VH;
@@ -13,6 +13,8 @@ export const ORBIT_STABLE_START = 520 / TOTAL_SCROLL_VH;
 export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
 export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
 export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
+export const PHASE_EIGHT_START = 2100 / TOTAL_SCROLL_VH;
+export const PHASE_NINE_START = 2600 / TOTAL_SCROLL_VH;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -158,6 +160,10 @@ export const OrbitSequence = ({ earthPosition }: OrbitSequenceProps) => {
       </line>
 
       <group ref={satelliteRigRef}>
+        {/* Local lighting rig to ensure satellite is clearly visible in the dark */}
+        <pointLight position={[4, 2, 4]} intensity={80} distance={15} color="#ffffff" decay={2} />
+        <pointLight position={[-4, 1, -4]} intensity={40} distance={15} color="#aaddff" decay={2} />
+        <pointLight position={[0, 4, -4]} intensity={60} distance={15} color="#ccddff" decay={2} />
         <Suspense fallback={null}>
           {loadSatellite && <SatelliteModel />}
         </Suspense>

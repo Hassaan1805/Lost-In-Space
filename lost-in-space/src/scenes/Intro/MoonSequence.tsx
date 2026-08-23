@@ -32,6 +32,9 @@ export const MoonSequence = ({ moonPosition }: MoonSequenceProps) => {
     clone.position.sub(center);
     // Scale it to be a bit smaller than Earth (Earth is radius 10, so let's make Moon diameter 14 => radius 7)
     clone.scale.setScalar(14 / largestDimension);
+    
+    // Rotate the moon so the more iconic/lighter side faces the camera
+    clone.rotation.y = Math.PI / 1.5;
 
     return clone;
   }, [scene]);
@@ -52,13 +55,13 @@ export const MoonSequence = ({ moonPosition }: MoonSequenceProps) => {
       const lightFade = ramp * ramp * (3 - 2 * ramp);
 
       if (keyLightRef.current) {
-        keyLightRef.current.intensity = 3.5 * lightFade;
+        keyLightRef.current.intensity = 10.0 * lightFade;
       }
       if (fillLightRef.current) {
-        fillLightRef.current.intensity = 1.2 * lightFade;
+        fillLightRef.current.intensity = 4.0 * lightFade;
       }
       if (rimLightRef.current) {
-        rimLightRef.current.intensity = 1.0 * lightFade;
+        rimLightRef.current.intensity = 3.0 * lightFade;
       }
     }
   });

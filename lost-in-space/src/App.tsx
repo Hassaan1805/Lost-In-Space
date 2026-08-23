@@ -11,6 +11,8 @@ import { OrbitStory } from './components/OrbitStory';
 import { MoonStory } from './components/MoonStory';
 import { MarsStory } from './components/MarsStory';
 import { JupiterStory } from './components/JupiterStory';
+import { SaturnStory } from './components/SaturnStory';
+import { UranusStory } from './components/UranusStory';
 import { AudioManager } from './components/AudioManager';
 import './style.css';
 
@@ -29,6 +31,8 @@ function App() {
           <MoonStory />
           <MarsStory />
           <JupiterStory />
+          <SaturnStory />
+          <UranusStory />
 
           <div className="canvas-container">
             <SceneManagerCanvas

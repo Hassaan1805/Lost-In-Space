@@ -5,6 +5,7 @@
 .af-wrapper {
   position: relative;
   padding: 1.5rem 1.5rem;
+  width: fit-content;
 }
 
 /* Background variants */

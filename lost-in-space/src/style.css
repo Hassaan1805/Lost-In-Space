@@ -16,7 +16,7 @@ body,
 
 /* We need a tall page to allow Lenis/ScrollTrigger to work */
 .scroll-container {
-  height: 2100vh;
+  height: 3100vh;
   position: relative;
 }
 
@@ -35,7 +35,7 @@ body,
 
 .moon-story {
   position: absolute;
-  top: 960vh;
+  top: 990vh;
   /* Starts exactly when the final cinematic composition is reached */
   left: 0;
   width: 100%;
@@ -64,6 +64,34 @@ body,
 .jupiter-story {
   position: absolute;
   top: 1960vh;
+  /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.saturn-story {
+  position: absolute;
+  top: 2460vh;
+  /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.uranus-story {
+  position: absolute;
+  top: 2960vh;
   /* Starts exactly when the final cinematic composition is reached */
   left: 0;
   width: 100%;

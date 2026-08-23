@@ -5,20 +5,24 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export const TOTAL_SCROLL_VH = 2100;
+export const TOTAL_SCROLL_VH = 3100;
 export const PHASE_FOUR_START = 480 / TOTAL_SCROLL_VH;
 export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
 export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
 export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
+export const PHASE_EIGHT_START = 2100 / TOTAL_SCROLL_VH;
+export const PHASE_NINE_START = 2600 / TOTAL_SCROLL_VH;
 
 export interface CinematicPhase {
-  id: 'EARTH' | 'ORBIT' | 'MOON' | 'MARS' | 'JUPITER';
+  id: 'EARTH' | 'ORBIT' | 'MOON' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS';
   index: number;
   label: string;
   status: string;
 }
 
 export const getActivePhase = (progress: number): CinematicPhase => {
+  if (progress >= PHASE_NINE_START) return { id: 'URANUS', index: 7, label: '07 / 09 — URANUS', status: 'ICE GIANT' };
+  if (progress >= PHASE_EIGHT_START) return { id: 'SATURN', index: 6, label: '06 / 09 — SATURN', status: 'RINGED GIANT' };
   if (progress >= PHASE_SEVEN_START) return { id: 'JUPITER', index: 5, label: '05 / 09 — JUPITER', status: 'GAS GIANT' };
   if (progress >= PHASE_SIX_START) return { id: 'MARS', index: 4, label: '04 / 09 — MARS', status: 'ORBITAL LOCK' };
   if (progress >= PHASE_FIVE_START) return { id: 'MOON', index: 3, label: '03 / 09 — MOON', status: 'TRANSIT' };
