@@ -30,7 +30,7 @@ export const IntroOverlay = () => {
     <div className="intro-overlay" style={{ opacity }}>
       <h1 className="intro-title">LOST IN SPACE</h1>
       <p className="intro-subtitle">A JOURNEY THROUGH THE UNKNOWN</p>
-      
+
       {/* Scroll Indicator */}
       <div style={{
         position: 'absolute',

@@ -45,13 +45,13 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
   const atmosphereRef = useRef<THREE.Mesh>(null);
   const cloudRef = useRef<THREE.Mesh>(null);
   const scrollController = useScrollController();
-  
+
   // Preload the earth model
   const { scene } = useGLTF('/textures/planets/earth/earth.glb');
-  
+
   // Clone the scene to allow multiple instances or safe mutation
   const earthModel = useMemo(() => scene.clone(), [scene]);
-  
+
   // Optionally, load clouds or nightmap if they aren't embedded in the GLB
   // Depending on how the GLB is set up, this might be redundant. But it's good to have them if the GLB lacks clouds.
   const cloudsTexture = useTexture('/textures/planets/earth/2k_earth_clouds.jpg');
@@ -67,7 +67,7 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
       // Slow rotation for the Earth
       earthRef.current.rotation.y += 0.0005;
     }
-    
+
     if (atmosphereRef.current) {
       // Update fresnel view vector
       atmosphereMaterial.uniforms.viewVector.value = new THREE.Vector3().subVectors(
@@ -119,14 +119,14 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
       {/* Real Earth Model */}
       <group ref={earthRef} scale={12}>
         <primitive object={earthModel} />
-        
+
         {/* Optional Cloud Layer (slightly larger than earth) */}
         <mesh ref={cloudRef} scale={1.01}>
           <sphereGeometry args={[1, 64, 64]} />
-          <meshStandardMaterial 
-            map={cloudsTexture} 
-            transparent={true} 
-            opacity={0.3} 
+          <meshStandardMaterial
+            map={cloudsTexture}
+            transparent={true}
+            opacity={0.3}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />

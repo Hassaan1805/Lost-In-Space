@@ -5,6 +5,27 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+export const TOTAL_SCROLL_VH = 2100;
+export const PHASE_FOUR_START = 480 / TOTAL_SCROLL_VH;
+export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
+export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
+export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
+
+export interface CinematicPhase {
+  id: 'EARTH' | 'ORBIT' | 'MOON' | 'MARS' | 'JUPITER';
+  index: number;
+  label: string;
+  status: string;
+}
+
+export const getActivePhase = (progress: number): CinematicPhase => {
+  if (progress >= PHASE_SEVEN_START) return { id: 'JUPITER', index: 5, label: '05 / 09 — JUPITER', status: 'GAS GIANT' };
+  if (progress >= PHASE_SIX_START) return { id: 'MARS', index: 4, label: '04 / 09 — MARS', status: 'ORBITAL LOCK' };
+  if (progress >= PHASE_FIVE_START) return { id: 'MOON', index: 3, label: '03 / 09 — MOON', status: 'TRANSIT' };
+  if (progress >= PHASE_FOUR_START) return { id: 'ORBIT', index: 2, label: '02 / 09 — ORBIT', status: 'ORBITAL LOCK' };
+  return { id: 'EARTH', index: 1, label: '01 / 09 — EARTH', status: 'APPROACHING' };
+};
+
 export interface SectionConfig {
   id: string;
   element: HTMLElement | null;
@@ -28,6 +49,7 @@ export interface ScrollState {
   velocity: number;
   currentSection: string | null;
   isSmooth: boolean;
+  phase: CinematicPhase;
 }
 
 const DEFAULT_STATE: ScrollState = {
@@ -38,6 +60,7 @@ const DEFAULT_STATE: ScrollState = {
   velocity: 0,
   currentSection: null,
   isSmooth: true,
+  phase: getActivePhase(0),
 };
 
 const ScrollContext = createContext<ScrollControllerAPI | null>(null);
@@ -110,6 +133,7 @@ class ScrollControllerClass implements ScrollControllerAPI {
     this.state.progress = lenis.limit > 0 ? lenis.scroll / lenis.limit : 0;
     this.state.velocity = lenis.velocity;
     this.state.direction = lenis.direction === 1 ? 'down' : lenis.direction === -1 ? 'up' : 'none';
+    this.state.phase = getActivePhase(this.state.progress);
 
     this.checkSectionChanges();
     this.notify();
@@ -264,7 +288,7 @@ class ScrollControllerClass implements ScrollControllerAPI {
       this.lenis.destroy();
       this.lenis = null;
     }
-    gsap.ticker.remove(() => {});
+    gsap.ticker.remove(() => { });
   }
 }
 

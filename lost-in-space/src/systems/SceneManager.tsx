@@ -142,6 +142,8 @@ export const SceneManagerCanvas: React.FC<{
   cameraConfig?: {
     position?: [number, number, number];
     fov?: number;
+    near?: number;
+    far?: number;
   };
 }> = ({ children, renderConfig = {}, cameraConfig = {} }) => {
   const [threeContext, setThreeContext] = useState<ThreeContextValue>(defaultThreeContext);
@@ -157,6 +159,8 @@ export const SceneManagerCanvas: React.FC<{
         camera={{
           position: cameraConfig.position ?? [0, 0, 5],
           fov: cameraConfig.fov ?? 60,
+          near: cameraConfig.near ?? 0.1,
+          far: cameraConfig.far ?? 1000,
         }}
         gl={{
           antialias: renderConfig.antialias ?? true,

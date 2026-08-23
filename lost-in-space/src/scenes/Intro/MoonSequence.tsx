@@ -30,8 +30,8 @@ export const MoonSequence = ({ moonPosition }: MoonSequenceProps) => {
     const largestDimension = Math.max(size.x, size.y, size.z, 0.001);
 
     clone.position.sub(center);
-    // Scale it to be a bit smaller than Earth (Earth is radius 10, so let's make Moon diameter 12 => radius 6)
-    clone.scale.setScalar(12 / largestDimension);
+    // Scale it to be a bit smaller than Earth (Earth is radius 10, so let's make Moon diameter 14 => radius 7)
+    clone.scale.setScalar(14 / largestDimension);
 
     return clone;
   }, [scene]);

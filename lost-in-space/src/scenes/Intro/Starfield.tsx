@@ -31,7 +31,7 @@ const createStarColors = (count: number) => {
   for (let i = 0; i < count; i++) {
     const variation = Math.random();
     let r = 1, g = 1, b = 1;
-    
+
     // Very subtle color variations (mostly white, some faint blue/orange)
     if (variation > 0.9) {
       r = 0.8; g = 0.9; b = 1.0; // blue-ish
@@ -41,7 +41,7 @@ const createStarColors = (count: number) => {
       const brightness = 0.6 + Math.random() * 0.4;
       r = g = b = brightness;
     }
-    
+
     colors[i * 3] = r;
     colors[i * 3 + 1] = g;
     colors[i * 3 + 2] = b;
@@ -53,10 +53,10 @@ export const Starfield = () => {
   const starsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.PointsMaterial>(null);
   const initialPositions = useRef<Float32Array | null>(null);
-  
+
   // Responsive star count
   const starCount = window.innerWidth < 768 ? 3000 : 8000;
-  
+
   const positions = useMemo(() => createStarPositions(starCount), [starCount]);
   const sizes = useMemo(() => createStarSizes(starCount), [starCount]);
   const colors = useMemo(() => createStarColors(starCount), [starCount]);
@@ -82,7 +82,7 @@ export const Starfield = () => {
       materialRef.current.size = 1 - orbitProgress * 0.45;
       materialRef.current.opacity = 0.8 - orbitProgress * 0.2;
     }
-    
+
     const pos = points.geometry.attributes.position;
     if (!initialPositions.current) {
       initialPositions.current = new Float32Array(pos.array);
@@ -91,14 +91,14 @@ export const Starfield = () => {
     for (let i = 0; i < pos.count; i++) {
       const idx = i * 3;
       (pos.array as Float32Array)[idx + 2] += driftSpeed * delta * 10;
-      
+
       // Loop stars back to the deep distance
       if ((pos.array as Float32Array)[idx + 2] > camera.position.z + 50 && initialPositions.current) {
         (pos.array as Float32Array)[idx + 2] = initialPositions.current[idx + 2] - 300;
       }
     }
     pos.needsUpdate = true;
-    
+
     // Slowly rotate the entire starfield
     points.rotation.y += delta * 0.02;
     points.rotation.z += delta * 0.01;

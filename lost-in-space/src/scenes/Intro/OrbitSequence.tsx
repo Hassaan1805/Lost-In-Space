@@ -4,13 +4,15 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { useScrollController } from '../../systems/ScrollController';
 
-export const TOTAL_SCROLL_VH = 1100;
+export const TOTAL_SCROLL_VH = 2100;
 // We divide the original vh targets by the new TOTAL_SCROLL_VH
 // so the checkpoints occur at the exact same physical pixel depth.
 export const EARTH_JOURNEY_END = 400 / TOTAL_SCROLL_VH;
 export const PHASE_FOUR_START = 480 / TOTAL_SCROLL_VH;
 export const ORBIT_STABLE_START = 520 / TOTAL_SCROLL_VH;
 export const PHASE_FIVE_START = 680 / TOTAL_SCROLL_VH;
+export const PHASE_SIX_START = 1100 / TOTAL_SCROLL_VH;
+export const PHASE_SEVEN_START = 1600 / TOTAL_SCROLL_VH;
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smoothStep = (value: number) => {
@@ -94,17 +96,17 @@ export const OrbitSequence = ({ earthPosition }: OrbitSequenceProps) => {
 
   useFrame(() => {
     const journeyProgress = scrollController.getProgress();
-    
+
     // Reveal completes by the time the camera stabilizes in orbit
     const orbitRevealProgress = clamp01(
       (journeyProgress - PHASE_FOUR_START) / (ORBIT_STABLE_START - PHASE_FOUR_START),
     );
-    
+
     // Satellite drift continues throughout the entire orbit chapter
     const orbitDriftProgress = clamp01(
       (journeyProgress - PHASE_FOUR_START) / (PHASE_FIVE_START - PHASE_FOUR_START),
     );
-    
+
     const reveal = smoothStep(orbitRevealProgress * 1.35);
 
     if (orbitGroupRef.current) {

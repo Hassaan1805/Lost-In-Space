@@ -30,9 +30,9 @@ export const EarthStory = () => {
       alignItems: 'center',
       padding: '0 10vw'
     }}>
-      <ScrollReveal 
-        id="earth-story-1" 
-        start="top 70%" 
+      <ScrollReveal
+        id="earth-story-1"
+        start="top 70%"
         end="bottom 30%"
         direction="up"
         className="story-block"
@@ -80,9 +80,9 @@ export const EarthStory = () => {
         )}
       </ScrollReveal>
 
-      <ScrollReveal 
-        id="earth-story-2" 
-        start="top 70%" 
+      <ScrollReveal
+        id="earth-story-2"
+        start="top 70%"
         end="bottom 30%"
         direction="up"
         className="story-block"
@@ -102,9 +102,9 @@ export const EarthStory = () => {
       </ScrollReveal>
 
       {/* Radial Timeline */}
-      <ScrollReveal 
-        id="earth-story-timeline" 
-        start="top 90%" 
+      <ScrollReveal
+        id="earth-story-timeline"
+        start="top 90%"
         end="bottom 10%"
         direction="up"
         className="story-block"

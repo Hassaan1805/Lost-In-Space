@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { AccentFrame } from './AccentFrame';
 import { useScrollController } from '../systems/ScrollController';
-import { PHASE_FOUR_START, PHASE_FIVE_START } from '../scenes/Intro/OrbitSequence';
 
 export const HUD = () => {
   const scrollController = useScrollController();
-  const [chapter, setChapter] = useState<'EARTH' | 'ORBIT' | 'MOON'>('EARTH');
+  const [destination, setDestination] = useState('01 / 09 — EARTH');
+  const [status, setStatus] = useState('APPROACHING');
 
   useEffect(() => scrollController.onStateChange((state) => {
-    if (state.progress >= PHASE_FIVE_START) {
-      setChapter('MOON');
-    } else if (state.progress >= PHASE_FOUR_START) {
-      setChapter('ORBIT');
-    } else {
-      setChapter('EARTH');
-    }
+    setDestination(state.phase.label);
+    setStatus(state.phase.status);
   }), [scrollController]);
-
-  const destination = chapter === 'MOON' ? '03 / 09 MOON' : (chapter === 'ORBIT' ? '02 / 09 ORBIT' : '01 / 09 EARTH');
-  const status = chapter === 'MOON' ? 'TRANSIT' : (chapter === 'ORBIT' ? 'ORBITAL LOCK' : 'APPROACHING');
 
   return (
     <div style={{

@@ -4,7 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   background: #000;
   color: white;
@@ -14,7 +16,7 @@ html, body, #root {
 
 /* We need a tall page to allow Lenis/ScrollTrigger to work */
 .scroll-container {
-  height: 1100vh;
+  height: 2100vh;
   position: relative;
 }
 
@@ -33,7 +35,36 @@ html, body, #root {
 
 .moon-story {
   position: absolute;
-  top: 960vh; /* Starts exactly when the final cinematic composition is reached */
+  top: 960vh;
+  /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.mars-story {
+  position: absolute;
+  top: 1460vh;
+  /* Starts exactly when the final cinematic composition is reached */
+  left: 0;
+  width: 100%;
+  min-height: 140vh;
+  display: flex;
+  align-items: center;
+  padding: 0 12vw;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.jupiter-story {
+  position: absolute;
+  top: 1960vh;
+  /* Starts exactly when the final cinematic composition is reached */
   left: 0;
   width: 100%;
   min-height: 140vh;
@@ -167,6 +198,7 @@ canvas {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .intro-title,
   .intro-subtitle {
     animation: none;

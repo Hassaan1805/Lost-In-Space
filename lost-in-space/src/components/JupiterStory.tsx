@@ -1,10 +1,10 @@
 import { AccentFrame } from './AccentFrame';
 import { ScrollReveal } from './ScrollReveal';
 
-export const MoonStory = () => (
-  <section className="moon-story" aria-label="Earth's Moon">
+export const JupiterStory = () => (
+  <section className="jupiter-story" aria-label="Jupiter">
     <ScrollReveal
-      id="moon-story"
+      id="jupiter-story"
       start="top 75%"
       end="bottom 25%"
       direction="up"
@@ -12,10 +12,10 @@ export const MoonStory = () => (
     >
       {(isActive) => (
         <div className="orbit-story__content">
-          <p className="orbit-story__eyebrow">03 / 09 — MOON</p>
-          <h2 className="orbit-story__title">THE MOON</h2>
+          <p className="orbit-story__eyebrow">05 / 09 — JUPITER</p>
+          <h2 className="orbit-story__title">JUPITER</h2>
           <p className="orbit-story__copy">
-            A silent sentinel holding the memories of our earliest ambitions.
+            A behemoth of gas and storms, reigning supreme as the largest planet in our solar system.
           </p>
 
           <AccentFrame
@@ -30,8 +30,8 @@ export const MoonStory = () => (
             style={{ marginTop: '2rem' }}
           >
             <span>DISTANCE TO EARTH</span>
-            <strong>384,400 KM</strong>
-            <span>ORBITAL PERIOD 27.3 DAYS</span>
+            <strong>628,000,000 KM</strong>
+            <span>ORBITAL PERIOD 12 YEARS</span>
           </AccentFrame>
         </div>
       )}

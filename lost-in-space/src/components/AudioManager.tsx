@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useScrollController } from '../systems/ScrollController';
-import { EARTH_JOURNEY_END, PHASE_FIVE_START } from '../scenes/Intro/OrbitSequence';
+import { EARTH_JOURNEY_END, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START } from '../scenes/Intro/OrbitSequence';
 
 export const AudioManager = () => {
   const scrollController = useScrollController();
   const [hasInteracted, setHasInteracted] = useState(false);
-  
+
   const ambienceRef = useRef<HTMLAudioElement | null>(null);
   const sweepRef = useRef<HTMLAudioElement | null>(null);
   const whooshRef = useRef<HTMLAudioElement | null>(null);
@@ -19,7 +19,7 @@ export const AudioManager = () => {
 
     sweepRef.current = new Audio('/audio/freesound_community-space-sweep-87377.mp3');
     sweepRef.current.volume = 0.4;
-    
+
     whooshRef.current = new Audio('/audio/floraphonic-scifi-anime-whoosh-39-205026.mp3');
     whooshRef.current.volume = 0.3;
 
@@ -40,10 +40,10 @@ export const AudioManager = () => {
     const startAudio = () => {
       if (!hasInteracted) {
         setHasInteracted(true);
-        
+
         // Start background ambience
-        ambienceRef.current?.play().catch(() => {});
-        
+        ambienceRef.current?.play().catch(() => { });
+
         // Unlock all other audio contexts by playing and immediately pausing
         const unlockAudio = (audio: HTMLAudioElement | null) => {
           if (audio) {
@@ -54,7 +54,7 @@ export const AudioManager = () => {
               // Restore volume based on which element it is
               if (audio === sweepRef.current || audio === hoverRef.current) audio.volume = 0.4;
               if (audio === whooshRef.current) audio.volume = 0.3;
-            }).catch(() => {});
+            }).catch(() => { });
           }
         };
 
@@ -93,7 +93,7 @@ export const AudioManager = () => {
       // 1. Approaching Earth
       if (state.progress > 0.4 * EARTH_JOURNEY_END && !triggeredEarthApproach) {
         triggeredEarthApproach = true;
-        if (hasInteracted) sweepRef.current?.play().catch(() => {});
+        if (hasInteracted) sweepRef.current?.play().catch(() => { });
       } else if (state.progress < 0.3 * EARTH_JOURNEY_END && triggeredEarthApproach) {
         triggeredEarthApproach = false;
       }
@@ -102,20 +102,37 @@ export const AudioManager = () => {
       if (state.progress > PHASE_FIVE_START && !triggeredOrbitDeparture) {
         triggeredOrbitDeparture = true;
         if (hasInteracted) {
-          whooshRef.current?.play().catch(() => {});
+          whooshRef.current?.play().catch(() => { });
         }
       } else if (state.progress < PHASE_FIVE_START - 0.05 && triggeredOrbitDeparture) {
         triggeredOrbitDeparture = false;
       }
 
       // 3. Moon Arrival (Travel phase ends around PHASE_FIVE_START + (1-PHASE_FIVE_START)*0.7)
-      const moonTravelEnd = PHASE_FIVE_START + (1 - PHASE_FIVE_START) * 0.7;
+      const moonTravelEnd = PHASE_FIVE_START + (PHASE_SIX_START - PHASE_FIVE_START) * 0.7;
       if (state.progress > moonTravelEnd && !triggeredMoonArrival) {
         triggeredMoonArrival = true;
-        if (hasInteracted) hoverRef.current?.play().catch(() => {});
+        if (hasInteracted) hoverRef.current?.play().catch(() => { });
       } else if (state.progress < moonTravelEnd - 0.05 && triggeredMoonArrival) {
         triggeredMoonArrival = false;
         hoverRef.current?.pause();
+      }
+
+      // 4. Leaving Moon (Phase 6 start)
+      if (state.progress > PHASE_SIX_START && !triggeredMoonArrival) {
+        // We reuse the whoosh and sweep for transit
+        if (hasInteracted) {
+          sweepRef.current?.play().catch(() => { });
+          whooshRef.current?.play().catch(() => { });
+        }
+      }
+
+      // 5. Leaving Mars (Phase 7 start)
+      if (state.progress > PHASE_SEVEN_START) {
+        if (hasInteracted) {
+          sweepRef.current?.play().catch(() => { });
+          whooshRef.current?.play().catch(() => { });
+        }
       }
     });
 

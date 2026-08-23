@@ -5,8 +5,10 @@ import { LightingManager } from '../../systems/LightingManager';
 import { useScrollController } from '../../systems/ScrollController';
 import { Starfield } from './Starfield';
 import { Earth } from './Earth';
-import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, OrbitSequence } from './OrbitSequence';
+import { EARTH_JOURNEY_END, PHASE_FOUR_START, ORBIT_STABLE_START, PHASE_FIVE_START, PHASE_SIX_START, PHASE_SEVEN_START, OrbitSequence } from './OrbitSequence';
 import { MoonSequence } from './MoonSequence';
+import { MarsSequence } from './MarsSequence';
+import { JupiterSequence } from './JupiterSequence';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
@@ -18,6 +20,14 @@ export const IntroScene = () => {
   const earthPosition = useMemo(() => new THREE.Vector3(0, 0, -80), []);
   // Moon's position far out
   const moonPosition = useMemo(() => new THREE.Vector3(280, 20, -350), []);
+  // Offset the camera target UP (positive Y) to push the Moon DOWN into the visual center
+  const moonVisualTarget = useMemo(() => moonPosition.clone().add(new THREE.Vector3(0, 5, 0)), [moonPosition]);
+  // Mars' position even further out
+  const marsPosition = useMemo(() => new THREE.Vector3(800, -50, -900), []);
+  // Jupiter's position in deep space
+  const jupiterPosition = useMemo(() => new THREE.Vector3(2000, -100, -2500), []);
+  // Offset target to the left so Jupiter's left edge is at the center of the screen
+  const jupiterVisualTarget = useMemo(() => jupiterPosition.clone().add(new THREE.Vector3(-60, 0, 0)), [jupiterPosition]);
 
   useFrame(() => {
     const fullJourneyProgress = scrollController.getProgress();
@@ -61,10 +71,11 @@ export const IntroScene = () => {
     currentOffset.copy(postEarthOffset);
 
     // Phase 5: Moon Approach
+    let postMoonOffset = new THREE.Vector3();
     if (fullJourneyProgress > PHASE_FIVE_START) {
       const moonProgress = Math.min(
         1,
-        (fullJourneyProgress - PHASE_FIVE_START) / (1 - PHASE_FIVE_START)
+        (fullJourneyProgress - PHASE_FIVE_START) / (PHASE_SIX_START - PHASE_FIVE_START)
       );
 
       const p1 = 0.10; // Pull back
@@ -90,20 +101,115 @@ export const IntroScene = () => {
         // Turn: pan target to Moon, keeping absolute camera position fixed
         const subP = (moonProgress - p1) / (p2 - p1);
         const ease = gsap.parseEase('power2.inOut')(subP);
-        currentTarget.lerpVectors(earthPosition, moonPosition, ease);
+        currentTarget.lerpVectors(earthPosition, moonVisualTarget, ease);
         currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtMoon, ease);
       } else if (moonProgress < p3) {
         // Travel: fly to Moon
         const subP = (moonProgress - p2) / (p3 - p2);
         const ease = gsap.parseEase('power2.inOut')(subP);
-        currentTarget.copy(moonPosition);
+        currentTarget.copy(moonVisualTarget);
         currentOffset.lerpVectors(offsetAtPullbackLookingAtMoon, approachOffset, ease);
       } else {
         // Arrival: settle into orbit around Moon
         const subP = (moonProgress - p3) / (1 - p3);
         const ease = gsap.parseEase('power3.out')(subP);
-        currentTarget.copy(moonPosition);
+        currentTarget.copy(moonVisualTarget);
         currentOffset.lerpVectors(approachOffset, finalMoonOffset, ease);
+      }
+      postMoonOffset.copy(currentOffset);
+    }
+    currentOffset.copy(postMoonOffset.lengthSq() > 0 ? postMoonOffset : currentOffset);
+
+    // Phase 6: Mars Approach
+    let postMarsOffset = new THREE.Vector3();
+    if (fullJourneyProgress > PHASE_SIX_START) {
+      const marsProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_SIX_START) / (PHASE_SEVEN_START - PHASE_SIX_START)
+      );
+
+      const p1 = 0.15; // Pull back from Moon
+      const p2 = 0.35; // Turn to Mars
+      const p3 = 0.75; // Travel to Mars
+
+      // Base values at end of Moon sequence
+      const finalMoonOffset = new THREE.Vector3(5, 3, 35);
+      const pullBackOffset = new THREE.Vector3(40, 20, 80);
+
+      const absCameraAtPullback = moonPosition.clone().add(pullBackOffset);
+      const offsetAtPullbackLookingAtMars = absCameraAtPullback.clone().sub(marsPosition);
+
+      const approachOffset = new THREE.Vector3(60, 15, 30);
+      const finalMarsOffset = new THREE.Vector3(15, 5, 60);
+
+      if (marsProgress < p1) {
+        const subP = marsProgress / p1;
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(moonVisualTarget);
+        currentOffset.lerpVectors(finalMoonOffset, pullBackOffset, ease);
+      } else if (marsProgress < p2) {
+        const subP = (marsProgress - p1) / (p2 - p1);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.lerpVectors(moonVisualTarget, marsPosition, ease);
+        currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtMars, ease);
+      } else if (marsProgress < p3) {
+        const subP = (marsProgress - p2) / (p3 - p2);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(marsPosition);
+        currentOffset.lerpVectors(offsetAtPullbackLookingAtMars, approachOffset, ease);
+      } else {
+        const subP = (marsProgress - p3) / (1 - p3);
+        const ease = gsap.parseEase('power3.out')(subP);
+        currentTarget.copy(marsPosition);
+        currentOffset.lerpVectors(approachOffset, finalMarsOffset, ease);
+      }
+      postMarsOffset.copy(currentOffset);
+    }
+    currentOffset.copy(postMarsOffset.lengthSq() > 0 ? postMarsOffset : currentOffset);
+
+    // Phase 7: Jupiter Approach
+    if (fullJourneyProgress > PHASE_SEVEN_START) {
+      const jupiterProgress = Math.min(
+        1,
+        (fullJourneyProgress - PHASE_SEVEN_START) / (1 - PHASE_SEVEN_START)
+      );
+
+      const p1 = 0.15; // Pull back from Mars
+      const p2 = 0.35; // Turn to Jupiter
+      const p3 = 0.75; // Travel to Jupiter
+
+      // Base values at end of Mars sequence
+      const finalMarsOffset = new THREE.Vector3(15, 5, 60);
+      const pullBackOffset = new THREE.Vector3(60, 20, 180);
+
+      const absCameraAtPullback = marsPosition.clone().add(pullBackOffset);
+      const offsetAtPullbackLookingAtJupiter = absCameraAtPullback.clone().sub(jupiterVisualTarget);
+
+      // Travel starts far and swoops in
+      const approachOffset = new THREE.Vector3(250, 40, 750);
+      // Final framing: distant enough to see the whole planet (radius 60, dist 450), target shifted -60 X
+      const finalJupiterOffset = new THREE.Vector3(0, 5, 450);
+
+      if (jupiterProgress < p1) {
+        const subP = jupiterProgress / p1;
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(marsPosition);
+        currentOffset.lerpVectors(finalMarsOffset, pullBackOffset, ease);
+      } else if (jupiterProgress < p2) {
+        const subP = (jupiterProgress - p1) / (p2 - p1);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.lerpVectors(marsPosition, jupiterVisualTarget, ease);
+        currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtJupiter, ease);
+      } else if (jupiterProgress < p3) {
+        const subP = (jupiterProgress - p2) / (p3 - p2);
+        const ease = gsap.parseEase('power2.inOut')(subP);
+        currentTarget.copy(jupiterVisualTarget);
+        currentOffset.lerpVectors(offsetAtPullbackLookingAtJupiter, approachOffset, ease);
+      } else {
+        const subP = (jupiterProgress - p3) / (1 - p3);
+        const ease = gsap.parseEase('power3.out')(subP);
+        currentTarget.copy(jupiterVisualTarget);
+        currentOffset.lerpVectors(approachOffset, finalJupiterOffset, ease);
       }
     }
 
@@ -117,6 +223,8 @@ export const IntroScene = () => {
       <Earth position={earthPosition.toArray()} />
       <OrbitSequence earthPosition={earthPosition} />
       <MoonSequence moonPosition={moonPosition} />
+      <MarsSequence marsPosition={marsPosition} />
+      <JupiterSequence jupiterPosition={jupiterPosition} />
       <LightingManager />
     </>
   );
