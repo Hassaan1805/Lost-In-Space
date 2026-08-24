@@ -31,7 +31,8 @@ export const MarsSequence = ({ marsPosition }: MarsSequenceProps) => {
 
     clone.position.sub(center);
     // Scale it to be a bit smaller than Earth but larger than Moon (radius 8)
-    clone.scale.setScalar(16 / largestDimension);
+    // Scaled up by 1.5x (from 16 to 24)
+    clone.scale.setScalar(24 / largestDimension);
 
     return clone;
   }, [scene]);

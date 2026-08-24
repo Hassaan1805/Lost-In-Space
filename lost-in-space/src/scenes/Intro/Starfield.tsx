@@ -56,7 +56,7 @@ export const Starfield = () => {
   const initialPositions = useRef<Float32Array | null>(null);
 
   // Responsive star count
-  const starCount = window.innerWidth < 768 ? 3000 : 8000;
+  const starCount = window.innerWidth < 768 ? 9000 : 24000;
 
   const positions = useMemo(() => createStarPositions(starCount), [starCount]);
   const sizes = useMemo(() => createStarSizes(starCount), [starCount]);
@@ -64,6 +64,62 @@ export const Starfield = () => {
 
   const scrollController = useScrollController();
   const { camera } = useThree();
+
+  const starShader = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: {
+      globalSize: { value: 1.0 },
+      globalOpacity: { value: 0.8 },
+    },
+    vertexShader: `
+      attribute float size;
+      attribute vec3 customColor;
+      varying vec3 vColor;
+      varying float vOpacity;
+      uniform float globalSize;
+      void main() {
+        vColor = customColor;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        
+        // Safeguard depth to prevent division by zero or negative values
+        float depth = max(0.1, -mvPosition.z);
+        
+        // Calculate intended mathematical size based on perspective
+        float calculatedSize = size * globalSize * (300.0 / depth);
+        
+        // Clamp minimum physical pixel size to prevent subpixel flickering/aliasing.
+        // A minimum of 3.0 is needed for the circular smoothstep to render cleanly.
+        gl_PointSize = max(3.0, calculatedSize);
+        
+        // If the star *should* be smaller than our minimum clamp, fade its opacity
+        // instead of shrinking it further. This mimics distance perfectly without aliasing.
+        vOpacity = calculatedSize < 3.0 ? (calculatedSize / 3.0) : 1.0;
+        
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vOpacity;
+      uniform float globalOpacity;
+      void main() {
+        // Distance from center of point (0.0 to 0.5 inside circle)
+        float d = distance(gl_PointCoord, vec2(0.5));
+        
+        // Discard pixels outside the circle to prevent square artifacts
+        if (d > 0.5) discard;
+        
+        // Soft radial gradient falloff for cinematic glow
+        float alpha = smoothstep(0.5, 0.1, d);
+        
+        gl_FragColor = vec4(vColor, alpha * globalOpacity * vOpacity);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    // Turn off built-in vertexColors so Three.js doesn't auto-inject conflicting attributes
+    vertexColors: false,
+  }), []);
 
   useFrame((state, delta) => {
     const points = starsRef.current;
@@ -79,10 +135,9 @@ export const Starfield = () => {
       0,
       Math.min(1, (fullJourneyProgress - PHASE_FOUR_START) / (1 - PHASE_FOUR_START)),
     );
-    if (materialRef.current) {
-      materialRef.current.size = 1 - orbitProgress * 0.45;
-      materialRef.current.opacity = 0.8 - orbitProgress * 0.2;
-    }
+
+    starShader.uniforms.globalSize.value = 1 - orbitProgress * 0.45;
+    starShader.uniforms.globalOpacity.value = 0.8 - orbitProgress * 0.2;
 
     const pos = points.geometry.attributes.position;
     if (!initialPositions.current) {
@@ -128,29 +183,16 @@ export const Starfield = () => {
       (pos.array as Float32Array)[idx + 2] = z;
     }
     pos.needsUpdate = true;
-
-    // Slowly rotate the entire starfield
-    points.rotation.y += delta * 0.02;
-    points.rotation.z += delta * 0.01;
   });
 
   return (
-    <points ref={starsRef}>
+    <points ref={starsRef} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-size" args={[sizes, 1]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        <bufferAttribute attach="attributes-customColor" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial
-        ref={materialRef}
-        size={1}
-        sizeAttenuation
-        transparent
-        opacity={0.8}
-        vertexColors
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
+      <primitive object={starShader} attach="material" />
     </points>
   );
 };

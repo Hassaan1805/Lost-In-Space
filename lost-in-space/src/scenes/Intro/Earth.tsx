@@ -7,9 +7,9 @@ import { PHASE_FIVE_START } from '../Intro/OrbitSequence';
 
 const FresnelShader = {
   uniforms: {
-    'c': { type: 'f', value: 0.1 },
-    'p': { type: 'f', value: 2.0 },
-    glowColor: { type: 'c', value: new THREE.Color(0x00aaff) },
+    'c': { type: 'f', value: 0.15 }, // slightly stronger rim base
+    'p': { type: 'f', value: 2.5 },  // smoother falloff
+    glowColor: { type: 'c', value: new THREE.Color(0x2288cc) }, // cool cinematic blue/teal
     viewVector: { type: 'v3', value: new THREE.Vector3() },
     uDim: { type: 'f', value: 1.0 },
   },
@@ -50,7 +50,36 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
   const { scene } = useGLTF('/textures/planets/earth/earth.glb');
 
   // Clone the scene to allow multiple instances or safe mutation
-  const earthModel = useMemo(() => scene.clone(), [scene]);
+  const earthModel = useMemo(() => {
+    const clone = scene.clone();
+    // Enhance the materials for a cinematic, realistic space photograph look
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        // IMPORTANT: Clone the material so we don't mutate the global GLTF cache across HMR/remounts
+        child.material = child.material.clone();
+        const mat = child.material as THREE.MeshStandardMaterial;
+        
+        // Restore the true colors of the albedo texture. 
+        // The GLB defaulted to 0.59 (dark gray). We set to 1.0 (white) so the texture's 
+        // natural deep blues and greens are rendered exactly as authored without blowing them out.
+        if (mat.color) {
+          mat.color.setHex(0xffffff);
+        }
+        
+        // Remove metallic reflection which causes the Earth to look like a black/gray mirror
+        mat.metalness = 0.0;
+        mat.roughness = 0.6; // Matte enough for land, allows subtle ocean highlight
+        mat.envMapIntensity = 1.0;
+
+        // Keep city lights highly localized and warmly tinted so they don't bleed
+        if (mat.emissiveMap) {
+          mat.emissive.setHex(0xffe6b3); // Subtle warm yellow/orange
+          mat.emissiveIntensity = 2.0;   // Bright enough for night side, won't overpower day side
+        }
+      }
+    });
+    return clone;
+  }, [scene]);
 
   // Optionally, load clouds or nightmap if they aren't embedded in the GLB
   // Depending on how the GLB is set up, this might be redundant. But it's good to have them if the GLB lacks clouds.
@@ -126,7 +155,7 @@ export const Earth = ({ position = [0, 0, -80] }: { position?: [number, number, 
           <meshStandardMaterial
             map={cloudsTexture}
             transparent={true}
-            opacity={0.3}
+            opacity={0.5}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />

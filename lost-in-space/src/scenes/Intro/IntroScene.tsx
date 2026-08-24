@@ -28,20 +28,24 @@ export const IntroScene = () => {
   const moonVisualTarget = useMemo(() => moonPosition.clone().add(new THREE.Vector3(0, 5, 0)), [moonPosition]);
   // Mars' position even further out
   const marsPosition = useMemo(() => new THREE.Vector3(800, -50, -900), []);
+  // Offset target RIGHT (+X) to push Mars to the LEFT of the screen
+  const marsVisualTarget = useMemo(() => marsPosition.clone().add(new THREE.Vector3(30, 0, 0)), [marsPosition]);
   // Jupiter's position in deep space
   const jupiterPosition = useMemo(() => new THREE.Vector3(2000, -100, -2500), []);
-  // Offset target so Jupiter is centered
-  const jupiterVisualTarget = useMemo(() => jupiterPosition.clone().add(new THREE.Vector3(0, 0, 0)), [jupiterPosition]);
+  // Offset target LEFT (-X) to push Jupiter to the RIGHT of the screen
+  const jupiterVisualTarget = useMemo(() => jupiterPosition.clone().add(new THREE.Vector3(-45, 0, 0)), [jupiterPosition]);
   // Saturn's position in deep space
   const saturnPosition = useMemo(() => new THREE.Vector3(3800, -200, -4500), []);
-  // Offset target left to keep Saturn in the right-center, scaled down for closer camera
-  const saturnVisualTarget = useMemo(() => saturnPosition.clone().add(new THREE.Vector3(-25, 0, 0)), [saturnPosition]);
+  // Offset target RIGHT (+X) to push Saturn to the LEFT of the screen
+  const saturnVisualTarget = useMemo(() => saturnPosition.clone().add(new THREE.Vector3(35, 0, 0)), [saturnPosition]);
   // Uranus's position further in deep space
   const uranusPosition = useMemo(() => new THREE.Vector3(6000, -300, -7500), []);
+  // Offset target LEFT (-X) to push Uranus to the RIGHT of the screen
   const uranusVisualTarget = useMemo(() => uranusPosition.clone().add(new THREE.Vector3(-30, 0, 0)), [uranusPosition]);
   // Neptune's position further in deep space
   const neptunePosition = useMemo(() => new THREE.Vector3(8200, -400, -10500), []);
-  const neptuneVisualTarget = useMemo(() => neptunePosition.clone().add(new THREE.Vector3(-30, 0, 0)), [neptunePosition]);
+  // Offset target RIGHT (+X) to push Neptune to the LEFT of the screen
+  const neptuneVisualTarget = useMemo(() => neptunePosition.clone().add(new THREE.Vector3(30, 0, 0)), [neptunePosition]);
 
   useFrame(() => {
     const fullJourneyProgress = scrollController.getProgress();
@@ -157,7 +161,7 @@ export const IntroScene = () => {
       const pullBackOffset = new THREE.Vector3(40, 20, 80);
 
       const absCameraAtPullback = moonPosition.clone().add(pullBackOffset);
-      const offsetAtPullbackLookingAtMars = absCameraAtPullback.clone().sub(marsPosition);
+      const offsetAtPullbackLookingAtMars = absCameraAtPullback.clone().sub(marsVisualTarget);
 
       const approachOffset = new THREE.Vector3(60, 15, 30);
       const finalMarsOffset = new THREE.Vector3(15, 5, 60);
@@ -170,21 +174,21 @@ export const IntroScene = () => {
       } else if (marsProgress < p2) {
         const subP = (marsProgress - p1) / (p2 - p1);
         const ease = gsap.parseEase('power2.inOut')(subP);
-        currentTarget.lerpVectors(moonVisualTarget, marsPosition, ease);
+        currentTarget.lerpVectors(moonVisualTarget, marsVisualTarget, ease);
         currentOffset.lerpVectors(pullBackOffset, offsetAtPullbackLookingAtMars, ease);
       } else if (marsProgress < p3) {
         const subP = (marsProgress - p2) / (p3 - p2);
         const ease = gsap.parseEase('power2.inOut')(subP);
-        currentTarget.copy(marsPosition);
+        currentTarget.copy(marsVisualTarget);
         currentOffset.lerpVectors(offsetAtPullbackLookingAtMars, approachOffset, ease);
       } else if (marsProgress < p4) {
         const subP = (marsProgress - p3) / (p4 - p3);
         const ease = gsap.parseEase('power3.out')(subP);
-        currentTarget.copy(marsPosition);
+        currentTarget.copy(marsVisualTarget);
         currentOffset.lerpVectors(approachOffset, finalMarsOffset, ease);
       } else {
         const subP = (marsProgress - p4) / (1 - p4);
-        currentTarget.copy(marsPosition);
+        currentTarget.copy(marsVisualTarget);
         const driftOffset = finalMarsOffset.clone().multiplyScalar(0.95);
         currentOffset.lerpVectors(finalMarsOffset, driftOffset, subP);
       }

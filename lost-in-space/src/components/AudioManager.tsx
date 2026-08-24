@@ -169,22 +169,35 @@ export const AudioManager = () => {
     let lastPhase = 'EARTH';
     let wasRewound = false;
 
-    const unsubscribe = scrollController.onStateChange((state) => {
+    const handleScrollState = (state: any) => {
       // Smoothly crossfade ambients based on progress
       const p = state.progress;
       
+      // Helper function to safely play/pause and set volume
+      const setAudio = (audio: HTMLAudioElement, vol: number) => {
+        // Clamp volume to 0-1 just to be safe
+        const safeVol = Math.max(0, Math.min(1, vol));
+        audio.volume = safeVol;
+        
+        if (safeVol > 0 && audio.paused) {
+          audio.play().catch(() => {});
+        } else if (safeVol === 0 && !audio.paused) {
+          audio.pause();
+        }
+      };
+      
       // Earth (0 -> PHASE_FOUR_START)
       const earthFade = 1 - Math.min(1, Math.max(0, p / PHASE_FOUR_START));
-      map.ambientEarth.volume = 0.2 * earthFade;
+      setAudio(map.ambientEarth, 0.2 * earthFade);
       
       // Ship Rumble (PHASE_FOUR_START -> PHASE_EIGHT_START)
       let shipVol = 0;
-      if (p > PHASE_FOUR_START && p < PHASE_EIGHT_START) {
+      if (p > PHASE_FOUR_START && p <= PHASE_EIGHT_START) {
         shipVol = 0.4;
-      } else if (p >= PHASE_EIGHT_START) {
+      } else if (p > PHASE_EIGHT_START) {
         shipVol = 0.4 * (1 - Math.min(1, (p - PHASE_EIGHT_START) / (PHASE_NINE_START - PHASE_EIGHT_START)));
       }
-      map.ambientShip.volume = shipVol;
+      setAudio(map.ambientShip, shipVol);
 
       // Deep Space (PHASE_SEVEN_START -> PHASE_TEN_START)
       let deepVol = 0;
@@ -194,13 +207,13 @@ export const AudioManager = () => {
       if (p > PHASE_TEN_START) {
         deepVol = 0.3 * (1 - Math.min(1, (p - PHASE_TEN_START) / (PHASE_ELEVEN_START - PHASE_TEN_START)));
       }
-      map.ambientDeep.volume = deepVol;
+      setAudio(map.ambientDeep, deepVol);
 
       // Beyond Void Sweep (PHASE_ELEVEN_START -> 1.0)
       if (p >= PHASE_TEN_START) {
-        map.ambientBeyond.volume = 0.5 * Math.min(1, (p - PHASE_TEN_START) / (PHASE_ELEVEN_START - PHASE_TEN_START));
+        setAudio(map.ambientBeyond, 0.5 * Math.min(1, (p - PHASE_TEN_START) / (PHASE_ELEVEN_START - PHASE_TEN_START)));
       } else {
-        map.ambientBeyond.volume = 0;
+        setAudio(map.ambientBeyond, 0);
       }
 
       // One-Shot Triggers
@@ -251,7 +264,12 @@ export const AudioManager = () => {
         // Reset rewind flag after 2 seconds
         setTimeout(() => { wasRewound = false; }, 2000);
       }
-    });
+    };
+
+    const unsubscribe = scrollController.onStateChange(handleScrollState);
+    
+    // Apply initial state immediately upon interaction!
+    handleScrollState(scrollController.getState());
 
     // Global click listener for generic UI sounds
     const handleGlobalClick = (e: MouseEvent) => {
