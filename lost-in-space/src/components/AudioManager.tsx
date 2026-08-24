@@ -78,50 +78,62 @@ export const AudioManager = () => {
   useEffect(() => {
     const startAudio = () => {
       if (!hasInteracted) {
-        setHasInteracted(true);
         const map = audioMapRef.current;
 
-        // Play initial ambiance and loading sound
-        map.ambientEarth.play().catch(() => {});
-        map.ambientShip.play().catch(() => {});
-        map.ambientDeep.play().catch(() => {});
-        map.ambientBeyond.play().catch(() => {});
+        // Try playing the main ambient track to see if the browser allows it
+        const playPromise = map.ambientEarth.play();
         
-        map.loading.volume = 0.5;
-        map.loading.play().catch(() => {});
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            // Success! The browser allowed audio playback.
+            setHasInteracted(true);
+            
+            map.ambientShip.play().catch(() => {});
+            map.ambientDeep.play().catch(() => {});
+            map.ambientBeyond.play().catch(() => {});
+            
+            map.loading.volume = 0.5;
+            map.loading.play().catch(() => {});
 
-        // Unlock all other audio contexts by playing and immediately pausing
-        const unlockAudio = (audio: HTMLAudioElement) => {
-          if (!audio) return;
-          const origVol = audio.volume;
-          audio.volume = 0;
-          audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            audio.volume = origVol;
-          }).catch(() => {});
-        };
+            // Unlock all other audio contexts by playing and immediately pausing
+            const unlockAudio = (audio: HTMLAudioElement) => {
+              if (!audio) return;
+              const origVol = audio.volume;
+              audio.volume = 0;
+              audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = origVol;
+              }).catch(() => {});
+            };
 
-        Object.values(map).forEach(audio => {
-          if (!audio.loop && audio !== map.loading) unlockAudio(audio);
-        });
+            Object.values(map).forEach(audio => {
+              if (!audio.loop && audio !== map.loading) unlockAudio(audio);
+            });
 
-        // Remove listeners
-        window.removeEventListener('click', startAudio);
-        window.removeEventListener('wheel', startAudio);
-        window.removeEventListener('touchstart', startAudio);
-        window.removeEventListener('keydown', startAudio);
+            // Remove listeners now that we have successfully unlocked
+            window.removeEventListener('click', startAudio);
+            window.removeEventListener('pointerdown', startAudio);
+            window.removeEventListener('touchstart', startAudio);
+            window.removeEventListener('keydown', startAudio);
+          }).catch(() => {
+            // Failed due to autoplay policy (likely a wheel event). 
+            // Do not set hasInteracted so we can try again on the next event.
+          });
+        }
       }
     };
 
+    // Wheel events are famously bad for unlocking audio in Chrome/Safari.
+    // Stick to explicit user gestures like clicks and keystrokes.
     window.addEventListener('click', startAudio);
-    window.addEventListener('wheel', startAudio, { once: true });
-    window.addEventListener('touchstart', startAudio, { once: true });
-    window.addEventListener('keydown', startAudio, { once: true });
+    window.addEventListener('pointerdown', startAudio);
+    window.addEventListener('touchstart', startAudio);
+    window.addEventListener('keydown', startAudio);
 
     return () => {
       window.removeEventListener('click', startAudio);
-      window.removeEventListener('wheel', startAudio);
+      window.removeEventListener('pointerdown', startAudio);
       window.removeEventListener('touchstart', startAudio);
       window.removeEventListener('keydown', startAudio);
     };
