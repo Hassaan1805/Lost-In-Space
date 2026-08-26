@@ -40,7 +40,7 @@ function App() {
 
           <div className="canvas-container">
             <SceneManagerCanvas
-              cameraConfig={{ position: [0, 5, 50], fov: 50, far: 10000 }}
+              cameraConfig={{ position: [0, 5, 50], fov: 50, far: 40000 }}
             >
               <Suspense fallback={<LoadingScreen />}>
                 <CameraBridge />

@@ -13,6 +13,7 @@ import { SaturnSequence } from './SaturnSequence';
 import { UranusSequence } from './UranusSequence';
 import { NeptuneSequence } from './NeptuneSequence';
 import { GalaxyEnvironment } from './GalaxyEnvironment';
+import { DistantSun } from './DistantSun';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
@@ -437,6 +438,7 @@ export const IntroScene = () => {
     <>
       <GalaxyEnvironment />
       <Starfield />
+      <DistantSun />
       <Earth position={earthPosition.toArray()} />
       <OrbitSequence earthPosition={earthPosition} />
       <MoonSequence moonPosition={moonPosition} />

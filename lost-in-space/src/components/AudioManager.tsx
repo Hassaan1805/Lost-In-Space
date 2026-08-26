@@ -60,7 +60,7 @@ export const AudioManager = () => {
     map.hover.volume = 0;
     
     map.launch.volume = 0.4;
-    map.whoosh.volume = 0.3;
+    map.whoosh.volume = 0.8; // Increased from 0.3 for better audibility during transitions
     map.alienRoar.volume = 0.5;
     map.rewind.volume = 0.6;
     map.typing.loop = true;
@@ -116,6 +116,7 @@ export const AudioManager = () => {
             window.removeEventListener('pointerdown', startAudio);
             window.removeEventListener('touchstart', startAudio);
             window.removeEventListener('keydown', startAudio);
+            window.removeEventListener('wheel', startAudio);
           }).catch(() => {
             // Failed due to autoplay policy (likely a wheel event). 
             // Do not set hasInteracted so we can try again on the next event.
@@ -125,17 +126,19 @@ export const AudioManager = () => {
     };
 
     // Wheel events are famously bad for unlocking audio in Chrome/Safari.
-    // Stick to explicit user gestures like clicks and keystrokes.
+    // However, some browsers or high-MEI scores allow it, so we should attempt it.
     window.addEventListener('click', startAudio);
     window.addEventListener('pointerdown', startAudio);
     window.addEventListener('touchstart', startAudio);
     window.addEventListener('keydown', startAudio);
+    window.addEventListener('wheel', startAudio);
 
     return () => {
       window.removeEventListener('click', startAudio);
       window.removeEventListener('pointerdown', startAudio);
       window.removeEventListener('touchstart', startAudio);
       window.removeEventListener('keydown', startAudio);
+      window.removeEventListener('wheel', startAudio);
     };
   }, [hasInteracted]);
 
@@ -215,6 +218,15 @@ export const AudioManager = () => {
       } else {
         setAudio(map.ambientBeyond, 0);
       }
+
+      // Dynamic Transit Engine Sound (Based on scroll velocity)
+      let hoverVol = 0;
+      if (p > PHASE_FOUR_START && p < PHASE_TEN_START) {
+        const vel = Math.abs(state.velocity || 0);
+        // Fade in based on velocity, maxing out at 0.5 volume for fast scrolling
+        hoverVol = Math.min(0.5, vel / 30);
+      }
+      setAudio(map.hover, hoverVol);
 
       // One-Shot Triggers
       // 1. Launch

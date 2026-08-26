@@ -6,6 +6,7 @@ import { EARTH_JOURNEY_END } from '../scenes/Intro/OrbitSequence';
 export const IntroOverlay = () => {
   const scrollController = useScrollController();
   const [opacity, setOpacity] = useState(1);
+  const [isStarted, setIsStarted] = useState(false);
 
   useEffect(() => {
     // We want the intro text to fade out as the user starts scrolling
@@ -31,7 +32,7 @@ export const IntroOverlay = () => {
       <h1 className="intro-title">LOST IN SPACE</h1>
       <p className="intro-subtitle">A JOURNEY THROUGH THE UNKNOWN</p>
 
-      {/* Scroll Indicator */}
+      {/* Action Area */}
       <div style={{
         position: 'absolute',
         bottom: '3rem',
@@ -41,13 +42,40 @@ export const IntroOverlay = () => {
         flexDirection: 'column',
         alignItems: 'center',
         gap: '1rem',
-        opacity: 0.6,
         fontFamily: 'system-ui, sans-serif',
         letterSpacing: '0.2em',
         fontSize: '0.75rem',
         textTransform: 'uppercase'
       }}>
-        <span>SCROLL TO EXPLORE</span>
+        {!isStarted && (
+          <button 
+            onClick={() => setIsStarted(true)}
+            style={{
+              padding: '12px 24px',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              color: 'white',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              letterSpacing: 'inherit',
+              transition: 'all 0.3s ease',
+              outline: 'none',
+              marginBottom: '1rem'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            }}
+          >
+            ENABLE AUDIO
+          </button>
+        )}
+        
+        <span style={{ opacity: 0.6 }}>SCROLL TO EXPLORE</span>
         <div style={{
           width: '1px',
           height: '40px',
